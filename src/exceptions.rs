@@ -5,6 +5,7 @@
 
 use thiserror::Error;
 
+/// Custom error types for the `Vq` library.
 #[derive(Debug, Error)]
 pub enum VqError {
     /// Indicates that two vectors do not have matching dimensions.

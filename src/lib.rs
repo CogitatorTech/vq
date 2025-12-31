@@ -1,11 +1,8 @@
 pub mod bq;
-pub mod distances;
+pub mod distance;
 pub mod exceptions;
-pub mod opq;
+mod logging;
 pub mod pq;
-pub mod rvq;
-mod settings;
 pub mod sq;
 pub mod tsvq;
-mod utils;
 pub mod vector;

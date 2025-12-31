@@ -1,7 +1,7 @@
 #[path = "utils.rs"]
 mod utils;
 
-use vq::distances::Distance;
+use vq::distance::Distance;
 use vq::vector::PARALLEL_THRESHOLD;
 
 // A helper function to compare two floating point numbers within a given tolerance.
@@ -110,92 +110,6 @@ fn test_manhattan_parallel() {
     // Each difference is 2, so sum = 2 * len.
     let expected = 2.0 * (len as f32);
     let d = Distance::Manhattan;
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, expected, 1e-6));
-}
-
-// ----------------------------
-// Chebyshev Distance
-// ----------------------------
-#[test]
-fn test_chebyshev_sequential() {
-    let a = vec![1.0f32, 5.0, 3.0];
-    let b = vec![4.0f32, 2.0, 9.0];
-    // Differences: |1-4|=3, |5-2|=3, |3-9|=6, so maximum is 6.
-    let d = Distance::Chebyshev;
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, 6.0, 1e-6));
-}
-
-#[test]
-fn test_chebyshev_parallel() {
-    let len = PARALLEL_THRESHOLD + 10;
-    // Create two vectors with nearly identical values except one coordinate.
-    let mut a: Vec<f32> = (0..len).map(|i| i as f32).collect();
-    let mut b: Vec<f32> = (0..len).map(|i| i as f32).collect();
-    // Introduce a large difference at the last element.
-    a[len - 1] = 1000.0;
-    b[len - 1] = 0.0;
-    let d = Distance::Chebyshev;
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, 1000.0, 1e-6));
-}
-
-// ----------------------------
-// Minkowski Distance (p = 3)
-// ----------------------------
-#[test]
-fn test_minkowski_sequential() {
-    let a = vec![1.0f32, 2.0, 3.0];
-    let b = vec![4.0f32, 6.0, 8.0];
-    // For p = 3:
-    // |1-4|^3 = 27, |2-6|^3 = 64, |3-8|^3 = 125, sum = 216, cube root = 6.
-    let d = Distance::Minkowski(3.0);
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, 6.0, 1e-6));
-}
-
-#[test]
-fn test_minkowski_parallel() {
-    let p = 3.0;
-    let d = Distance::Minkowski(p);
-    let len = PARALLEL_THRESHOLD + 10;
-    let a: Vec<f32> = (0..len).map(|i| i as f32).collect();
-    let b: Vec<f32> = (0..len).map(|i| (i as f32) + 1.0).collect();
-    // Each difference is 1: |1|^3 = 1. Sum = len, then result = len^(1/3)
-    let expected = (len as f32).powf(1.0 / 3.0);
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, expected, 1e-6));
-}
-
-// ----------------------------
-// Hamming Distance
-// ----------------------------
-#[test]
-fn test_hamming_sequential() {
-    let a = vec![1.0f32, 2.0, 3.0, 4.0];
-    let b = vec![1.0f32, 0.0, 3.0, 0.0];
-    // Differences occur at index 1 and 3, so count = 2.
-    let d = Distance::Hamming;
-    let result = d.compute(&a, &b);
-    assert!(approx_eq(result, 2.0, 1e-6));
-}
-
-#[test]
-fn test_hamming_parallel() {
-    let len = PARALLEL_THRESHOLD + 10;
-    let a: Vec<f32> = vec![1.0f32; len];
-    // Make b differ on every odd index.
-    let b: Vec<f32> = (0..len)
-        .map(|i| if i % 2 == 0 { 1.0f32 } else { 0.0f32 })
-        .collect();
-    // Expected differences: about half the indices.
-    let expected = if len % 2 == 0 {
-        (len / 2) as f32
-    } else {
-        ((len / 2) + 1) as f32
-    };
-    let d = Distance::Hamming;
     let result = d.compute(&a, &b);
     assert!(approx_eq(result, expected, 1e-6));
 }

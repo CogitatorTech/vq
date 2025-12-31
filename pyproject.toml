@@ -3,30 +3,24 @@ name = "vq"
 version = "0.1.0"
 description = "Python environment for Vq"
 authors = ["Hassan Abedi <hassan.abedi.t@gmail.com>"]
-maintainers = ["Hassan Abedi <hassan.abedi.t@gmail.com>"]
-readme = "README.md"
-repository = "https://github.com/habedi/vq"
-license = "MIT OR Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-poetry-dynamic-versioning = "^1.4.0"
 pytest = "^8.0.1"
 pytest-cov = "^6.0.0"
 pytest-mock = "^3.14.0"
 mypy = "^1.11.1"
-ruff = "^0.9.9"
+ruff = "^0.11.2"
 jupyter = "^1.1.1"
 polars = "^1.22.0"
 seaborn = "^0.13.2"
 notebook = "^7.3.2"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+maturin = { extras = ["zig"], version = "^1.8.3" }
+twine = "^6.1.0"
+ipython = "^9.0.2"
 
 [tool.pytest.ini_options]
-pythonpath = [".", "notebooks"]
+pythonpath = [".", "notebooks", "pyvq"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -34,11 +28,6 @@ ignore_missing_imports = true
 disallow_untyped_calls = true
 strict_optional = true
 warn_redundant_casts = true
-
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-versioning = "semver"  # Semantic Versioning
 
 # Ruff configuration
 [tool.ruff]
@@ -63,11 +52,13 @@ exclude = [
     "build",
     "dist",
     "node_modules",
-    "venv"
+    "venv",
+    ## PyVQ specific
+    "pyvq/tests",
 ]
 line-length = 100
 indent-width = 4
-src = ["tests", "benches", "examples", "scripts", "notebooks"]
+src = [".", "notebooks", "pyvq"]
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -90,4 +81,4 @@ line-ending = "auto"
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = []
+"pyvq/tests/**/*.py" = []

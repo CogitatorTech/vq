@@ -9,7 +9,7 @@ use vq::vector::Vector;
 
 // Benchmark parameters.
 pub const SEED: u64 = 66; // Seed for random number generation.
-pub const NUM_SAMPLES: [usize; 5] = [1_000, 5_000, 10_000, 50_000, 100_000]; // Number of samples (vectors) to generate.
+pub const NUM_SAMPLES: [usize; 3] = [1_000, 5_000, 10_000]; // Number of samples (vectors) to generate.
 pub const DIM: usize = 128; // Dimensionality of the data (vector length).
 pub const M: usize = 16; // Number of subspaces to partition the data into.
 pub const K: usize = 256; // Number of centroids per subspace.
@@ -122,7 +122,6 @@ pub fn calculate_recall(original: &[Vector<f32>], approx: &[Vector<f32>], k: usi
             .count() as f32;
         total_recall += intersection / k as f32;
     }
-
     Ok(total_recall / (n_samples / step) as f32)
 }
 

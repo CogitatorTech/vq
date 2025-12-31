@@ -81,3 +81,6 @@ Cargo.lock
 .DS_Store
 benchmark_results.csv
 eval_*.csv
+pyvq/target
+pyvq/wheels
+.env

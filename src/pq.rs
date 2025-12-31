@@ -1,6 +1,6 @@
 //! # Product Quantizer Implementation
 //!
-//! This module implements a Product Quantizer that partitions input vectors into sub-vectors,
+//! This module implements a product quantizer that partitions input vectors into sub-vectors,
 //! then quantizes each sub-vector independently using a separate codebook learned via the
 //! Linde-Buzo-Gray (LBG) algorithm. The final quantized representation is obtained by selecting
 //! the best matching centroid (codeword) for each subspace using a specified distance metric,
@@ -15,7 +15,7 @@
 //! # Example
 //! ```
 //! use vq::vector::Vector;
-//! use vq::distances::Distance;
+//! use vq::distance::Distance;
 //! use vq::pq::ProductQuantizer;
 //!
 //! // Create a small training dataset. Each vector has dimension 4.
@@ -42,13 +42,14 @@
 //! println!("Quantized vector: {:?}", quantized);
 //! ```
 
-use crate::distances::Distance;
+use crate::distance::Distance;
 use crate::exceptions::VqError;
-use crate::utils::lbg_quantize;
+use crate::vector::lbg_quantize;
 use crate::vector::Vector;
 use half::f16;
 use rayon::prelude::*;
 
+/// A product quantizer that partitions input vectors into sub-vectors and quantizes them.
 pub struct ProductQuantizer {
     /// A vector of codebooks (one per subspace). Each codebook is a vector of centroids.
     codebooks: Vec<Vec<Vector<f32>>>,

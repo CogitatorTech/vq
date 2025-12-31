@@ -1,6 +1,6 @@
 [package]
 name = "vq"
-version = "0.1.4"
+version = "0.2.0-beta"
 description = "A vector quantization library for Rust"
 repository = "https://github.com/habedi/vq"
 license = "MIT OR Apache-2.0"
@@ -54,13 +54,6 @@ rand_distr = "0.5.0"
 serde = { version = "1.0.217", features = ["derive"] }
 clap = { version = "4.5.29", features = ["derive"] }
 thiserror = "2"
-
-[dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-
-[[bench]]
-name = "main"
-harness = false
 
 [profile.release]
 strip = "symbols"

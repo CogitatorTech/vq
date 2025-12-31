@@ -1,0 +1,15 @@
+[package]
+name = "pyvq"
+version = "0.1.0-alpha"
+edition = "2021"
+publish = false
+
+[lib]
+name = "pyvq"
+crate-type = ["cdylib"]
+doc = false
+
+[dependencies]
+vq = { path = ".." }
+pyo3 = { version = "0.24.1", features = ["abi3-py310", "extension-module", "auto-initialize"] }
+

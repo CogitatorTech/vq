@@ -1,0 +1,40 @@
+##########################################################################
+## Maturin Configuration
+##########################################################################
+[build-system]
+requires = ["maturin>=1.0,<2.0", "setuptools", "wheel"]
+build-backend = "maturin"
+
+[project]
+name = "pyvq"
+description = "Python bindings for the Vq library"
+authors = [{ name = "Hassan Abedi", email = "hassan.abedi.t@gmail.com" }]
+maintainers = [{ name = "Hassan Abedi", email = "hassan.abedi.t@gmail.com" }]
+keywords = ["vector-quantization", "quantization", "nearest-neighbor", "data-compression", "embeddings"]
+requires-python = ">=3.10"
+license = { text = "MIT" }
+readme = "README.md"
+dynamic = ['version']
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+homepage = "https://github.com/habedi/vq"
+documentation = "https://github.com/habedi/vq"
+repository = "https://github.com/habedi/vq"
+
+[tool.maturin]
+module-name = "pyvq"
+bindings = "pyo3"
+features = ["pyo3/extension-module"]
+include = [{ path = ".", format = "sdist" }]
+strip = true
+release = true

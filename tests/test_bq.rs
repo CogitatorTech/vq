@@ -13,10 +13,11 @@ fn test_binary_quantizer_large_vector() {
     let vector = &data[0];
 
     // Using threshold 0.0, low = 0, high = 1 (unsigned 8-bit values)
-    let quantizer = BinaryQuantizer::fit(0.0, 0, 1);
-    let quantized: Vector<u8> = quantizer.quantize(vector);
+    let quantizer = BinaryQuantizer::new(0.0, 0, 1);
+    // Pass the underlying slice from the Vector<f32>
+    let quantized: Vector<u8> = quantizer.quantize(&vector.data);
     assert_eq!(
-        quantized.len(),
+        quantized.data.len(),
         dim,
         "Quantized output must have same dimension as input"
     );

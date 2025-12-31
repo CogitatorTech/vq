@@ -4,7 +4,7 @@ use std::io::Write;
 use std::time::Instant;
 use tracing::{info, span, Level};
 
-use vq::distances::Distance;
+use vq::distance::Distance;
 use vq::tsvq::TSVQ;
 use vq::vector::Vector;
 

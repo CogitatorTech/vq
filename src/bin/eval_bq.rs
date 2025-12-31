@@ -36,14 +36,17 @@ fn run_benchmark(
     drop(_data_gen_enter);
 
     // 2. Initialize the BinaryQuantizer.
-    let bq = BinaryQuantizer::fit(threshold, low, high);
+    let bq = BinaryQuantizer::new(threshold, low, high);
 
     // 3. Quantize all vectors and measure quantization time.
     let quantization_span = span!(Level::INFO, "Quantization Phase", n_samples);
     let _quantization_enter = quantization_span.enter();
     let quantization_start = Instant::now();
-    let quantized_data: Vec<Vector<u8>> =
-        original_data.iter().map(|vec| bq.quantize(vec)).collect();
+    // Pass the underlying slice of each Vector<f32> to quantize.
+    let quantized_data: Vec<Vector<u8>> = original_data
+        .iter()
+        .map(|vec| bq.quantize(&vec.data))
+        .collect();
     let quantization_time_ms = quantization_start.elapsed().as_secs_f64() * 1000.0;
     drop(_quantization_enter);
 

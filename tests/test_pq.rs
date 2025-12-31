@@ -3,7 +3,7 @@ mod utils;
 
 use half::f16;
 use utils::{generate_test_data, seeded_rng};
-use vq::distances::Distance;
+use vq::distance::Distance;
 use vq::pq::ProductQuantizer;
 
 #[test]

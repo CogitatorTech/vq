@@ -9,28 +9,37 @@
 [<img alt="downloads" src="https://img.shields.io/crates/d/vq?label=downloads&style=flat&labelColor=555555&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="msrv" src="https://img.shields.io/badge/msrv-1.83.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.83.0)
 [<img alt="dependencies" src="https://deps.rs/repo/github/habedi/vq/status.svg">](https://deps.rs/repo/github/habedi/vq)
-[<img alt="license" src="https://img.shields.io/badge/license-mit%2Fapache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/habedi/vq)
+[<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/habedi/vq)
 
-Vq (**v**[ector] **q**[uantizer]) is a Rust library that implements several
-popular [vector quantization](https://en.wikipedia.org/wiki/Vector_quantization) algorithms including binary, scalar,
-and product quantization.
-It provides a simple API for data compression that helps reduce memory usage and computational overhead.
+Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
+It provides implementations of popular quantization algorithms, including Binary Quantization (BQ), Scalar
+Quantization (SQ), Product Quantization (PQ), Optimized Product Quantization (OPQ), Tree-structured Vector
+Quantization (TSVQ), and Residual Vector Quantization (RVQ).
+
+Vector quantization is a technique used in machine learning and data compression to reduce the size of high-dimensional
+vectors by approximating them with a smaller set of representative vectors.
+It can be used for various applications such as image compression and nearest neighbor search to speed up similarity
+search in large datasets.
 
 ### Features
 
-- Implemented Algorithms:
-    - [Binary Quantization (BQ)](src/bq.rs)
-    - [Scalar Quantization (SQ)](src/sq.rs)
-    - [Product Quantization (PQ)](https://ieeexplore.ieee.org/document/5432202)
-    - [Optimized Product Quantization (OPQ)](https://ieeexplore.ieee.org/document/6619223)
-    - [Tree-structured Vector Quantization (TSVQ)](https://ieeexplore.ieee.org/document/515493)
-    - [Residual Vector Quantization (RVQ)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3231071/)
+- Simple and uniform API for all quantization algorithms
+- Fast distance computation using SIMD instructions (SSE and AVX) on AMD64 architecture
+- Parallelized vector operations for large vectors using [Rayon](https://crates.io/crates/rayon)
+- Different distance support, including Euclidean, Cosine, and Manhattan distances
 
-- Parallelized vector operations for large vectors using [Rayon](https://crates.io/crates/rayon).
-- Flexible quantization algorithm implementations that support using various distance metrics such as Euclidean, Cosine,
-  and Manhattan distances.
-- Support for quantizing vectors of `f32` to `f16` (using [half](https://crates.io/crates/half)) or `u8` data types.
-- Simple, intuitive, and uniform API for all quantization algorithms.
+### Quantization Algorithms
+
+| Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type | Output Type |
+|-----------------------------------------------------|---------------------|-------------------------|----------------------|------------|-------------|
+| [BQ](src/bq.rs)                                     | $O(nd)$             | $O(nd)$                 | Hamming and Cosine   | `&[f32]`   | `Vec<u8>`   |
+| [SQ](src/sq.rs)                                     | $O(n)$              | $O(nd)$                 | Euclidean            | `&[f32]`   | `Vec<u8>`   |
+| [PQ](https://ieeexplore.ieee.org/document/5432202)  | $O(nkd)$            | $O(nd)$                 | Euclidean and Cosine | `&[f32]`   | `Vec<f16>`  |
+| [TSVQ](https://ieeexplore.ieee.org/document/515493) | $O(n \log k)$       | $O(d \log k)$           | Euclidean            | `&[f32]`   | `Vec<f16>`  |
+
+- $n$: number of vectors
+- $d$: dimensionality of vectors
+- $k$: number of centroids or clusters
 
 ### Installation
 

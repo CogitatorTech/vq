@@ -1,6 +1,6 @@
 //! # Tree-Structured Vector Quantizer Implementation
 //!
-//! This module implements a Tree-Structured Vector Quantizer (TSVQ) that builds a binary tree
+//! This module implements a tree-structured vector quantizer (TSVQ) that builds a binary tree
 //! by recursively partitioning training data along the dimension with maximum variance. Each node
 //! stores the centroid (mean) of its data, and leaf nodes provide the final quantized representations.
 //! During quantization, the TSVQ tree is traversed (using a given distance metric) to select the leaf
@@ -15,7 +15,7 @@
 //! # Example
 //! ```
 //! use vq::vector::Vector;
-//! use vq::distances::Distance;
+//! use vq::distance::Distance;
 //! use vq::tsvq::TSVQ;
 //! use half::f16;
 //!
@@ -36,13 +36,13 @@
 //! println!("Quantized vector: {:?}", quantized);
 //! ```
 
-use crate::distances::Distance;
+use crate::distance::Distance;
 use crate::exceptions::VqError;
 use crate::vector::{mean_vector, Vector};
 use half::f16;
 use rayon::prelude::*;
 
-/// A node in the Tree-Structured Vector Quantizer (TSVQ) tree.
+/// A node in the TSVQ tree.
 ///
 /// Each node holds a centroid (the mean of the training data at that node)
 /// and optionally left/right child nodes representing further splits.
@@ -181,7 +181,7 @@ impl TSVQNode {
     }
 }
 
-/// A Tree-Structured Vector Quantizer (TSVQ) that builds a binary tree for quantization.
+/// A tree-structured vector quantizer (TSVQ) that builds a binary tree for quantization.
 ///
 /// The TSVQ is constructed from a set of training data by recursively partitioning
 /// the data along the dimension of maximum variance. Each node stores the mean

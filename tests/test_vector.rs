@@ -1,7 +1,7 @@
 #[path = "utils.rs"]
 mod utils;
 
-use half::{bf16, f16};
+use half::f16;
 use std::panic;
 use vq::vector::{mean_vector, Vector, PARALLEL_THRESHOLD};
 
@@ -172,17 +172,6 @@ fn test_display() {
 // --- Tests using other Real types ---
 
 #[test]
-fn test_f64_operations() {
-    let a = Vector::new(vec![1.0f64, 2.0, 3.0]);
-    let b = Vector::new(vec![4.0f64, 5.0, 6.0]);
-    let dot = a.dot(&b);
-    assert!((dot - 32.0).abs() < 1e-6);
-    let norm = a.norm();
-    let expected_norm = (1.0f64 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0).sqrt();
-    assert!((norm - expected_norm).abs() < 1e-6);
-}
-
-#[test]
 fn test_f16_operations() {
     // Test basic operations using half-precision (f16).
     let a = Vector::new(vec![
@@ -197,24 +186,6 @@ fn test_f16_operations() {
     ]);
     let dot = a.dot(&b);
     // Convert dot to f32 for comparison.
-    let dot_f32 = f32::from(dot);
-    assert!((dot_f32 - 32.0).abs() < 1e-1);
-}
-
-#[test]
-fn test_bf16_operations() {
-    // Test basic operations using bf16.
-    let a = Vector::new(vec![
-        bf16::from_f32(1.0),
-        bf16::from_f32(2.0),
-        bf16::from_f32(3.0),
-    ]);
-    let b = Vector::new(vec![
-        bf16::from_f32(4.0),
-        bf16::from_f32(5.0),
-        bf16::from_f32(6.0),
-    ]);
-    let dot = a.dot(&b);
     let dot_f32 = f32::from(dot);
     assert!((dot_f32 - 32.0).abs() < 1e-1);
 }

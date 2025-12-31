@@ -36,14 +36,17 @@ fn run_benchmark(
     drop(_data_gen_enter);
 
     // 2. Initialize the ScalarQuantizer.
-    let sq = ScalarQuantizer::fit(min_val, max_val, levels);
+    let sq = ScalarQuantizer::new(min_val, max_val, levels);
 
     // 3. Quantize all vectors and measure quantization time.
     let quantization_span = span!(Level::INFO, "Quantization Phase", n_samples);
     let _quantization_enter = quantization_span.enter();
     let quantization_start = Instant::now();
-    let quantized_data: Vec<Vector<u8>> =
-        original_data.iter().map(|vec| sq.quantize(vec)).collect();
+    // Pass each vector's data (as &[f32]) to the quantizer.
+    let quantized_data: Vec<Vector<u8>> = original_data
+        .iter()
+        .map(|vec| sq.quantize(&vec.data))
+        .collect();
     let quantization_time_ms = quantization_start.elapsed().as_secs_f64() * 1000.0;
     drop(_quantization_enter);
 
@@ -92,7 +95,8 @@ pub fn main() -> Result<()> {
     let _overall_enter = overall_span.enter();
 
     let mut results = Vec::new();
-    for n_samples in NUM_SAMPLES {
+    // Assume NUM_SAMPLES is a slice or array.
+    for &n_samples in NUM_SAMPLES.iter() {
         let bench_span = span!(Level::INFO, "Benchmark", n_samples);
         let _bench_enter = bench_span.enter();
         info!("Running benchmark with {} samples...", n_samples);

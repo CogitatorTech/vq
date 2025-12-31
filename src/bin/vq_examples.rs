@@ -5,7 +5,7 @@
 use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
-use vq::distances::Distance;
+use vq::distance::Distance;
 use vq::opq::OptimizedProductQuantizer;
 use vq::pq::ProductQuantizer;
 use vq::rvq::ResidualQuantizer;
@@ -50,10 +50,10 @@ fn example_quantizers(training_data: &[Vector<f32>], test_vector: &Vector<f32>) 
 
 /// Example: Binary Quantizer (BQ).
 /// Maps values to 0 or 1 based on a threshold.
-fn example_bq(v: &Vector<f32>) {
+fn example_bq(v: &[f32]) {
     use vq::bq::BinaryQuantizer;
     // Use a threshold of 5: values below 5 become 0, values 5 or above become 1.
-    let quantizer = BinaryQuantizer::fit(
+    let quantizer = BinaryQuantizer::new(
         5.0, // Threshold for quantization.
         0,   // Lower value for quantization.
         1,   // Upper value for quantization.
@@ -67,7 +67,7 @@ fn example_bq(v: &Vector<f32>) {
 fn example_sq(v: &Vector<f32>) {
     use vq::sq::ScalarQuantizer;
     // Quantize values from -1 to 1 into 5 levels.
-    let quantizer = ScalarQuantizer::fit(
+    let quantizer = ScalarQuantizer::new(
         -1.0, // Minimum value.
         1.0,  // Maximum value.
         5,    // Number of levels.

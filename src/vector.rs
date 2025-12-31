@@ -5,14 +5,17 @@
 //! to compute the mean vector from a slice of vectors. When the input size exceeds a threshold,
 //! Rayon is used to perform operations in parallel for better performance.
 
-use half::{bf16, f16};
+use half::f16;
 use rayon::prelude::*;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 
 use crate::exceptions::VqError;
 
-/// Size threshold for enabling parallel computation.
+use rand::prelude::{IndexedRandom, SeedableRng, StdRng};
+use rand::seq::SliceRandom;
+
+/// Size threshold for enabling parallel computation (via multi-threading).
 pub const PARALLEL_THRESHOLD: usize = 1024;
 
 /// Trait for basic operations on real numbers.
@@ -53,27 +56,6 @@ impl Real for f32 {
     }
 }
 
-impl Real for f64 {
-    fn zero() -> Self {
-        0.0
-    }
-    fn one() -> Self {
-        1.0
-    }
-    fn sqrt(self) -> Self {
-        f64::sqrt(self)
-    }
-    fn abs(self) -> Self {
-        f64::abs(self)
-    }
-    fn powf(self, n: Self) -> Self {
-        f64::powf(self, n)
-    }
-    fn from_f64(x: f64) -> Self {
-        x
-    }
-}
-
 impl Real for f16 {
     fn zero() -> Self {
         f16::from_f32(0.0)
@@ -96,31 +78,6 @@ impl Real for f16 {
     }
     fn from_f64(x: f64) -> Self {
         f16::from_f32(x as f32)
-    }
-}
-
-impl Real for bf16 {
-    fn zero() -> Self {
-        bf16::from_f32(0.0)
-    }
-    fn one() -> Self {
-        bf16::from_f32(1.0)
-    }
-    fn sqrt(self) -> Self {
-        bf16::from_f32(f32::from(self).sqrt())
-    }
-    fn abs(self) -> Self {
-        if self < bf16::from_f32(0.0) {
-            -self
-        } else {
-            self
-        }
-    }
-    fn powf(self, n: Self) -> Self {
-        bf16::from_f32(f32::from(self).powf(f32::from(n)))
-    }
-    fn from_f64(x: f64) -> Self {
-        bf16::from_f32(x as f32)
     }
 }
 
@@ -179,15 +136,7 @@ impl<T: Real> Vector<T> {
     where
         T: Send + Sync,
     {
-        if self.len() != other.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.len(),
-                    found: other.len()
-                }
-            );
-        }
+        self.assert_same_dim(other);
         if self.len() > PARALLEL_THRESHOLD {
             self.data
                 .par_iter()
@@ -218,21 +167,26 @@ impl<T: Real> Vector<T> {
         let diff = self - other;
         diff.dot(&diff)
     }
+
+    /// Private helper to verify that two vectors have the same dimension.
+    fn assert_same_dim(&self, other: &Self) {
+        if self.len() != other.len() {
+            panic!(
+                "{}",
+                VqError::DimensionMismatch {
+                    expected: self.len(),
+                    found: other.len()
+                }
+            );
+        }
+    }
 }
 
 /// Vector addition.
 impl<'b, T: Real> Add<&'b Vector<T>> for &Vector<T> {
     type Output = Vector<T>;
     fn add(self, rhs: &'b Vector<T>) -> Vector<T> {
-        if self.len() != rhs.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.len(),
-                    found: rhs.len()
-                }
-            );
-        }
+        self.assert_same_dim(rhs);
         let data = self
             .data
             .iter()
@@ -247,15 +201,7 @@ impl<'b, T: Real> Add<&'b Vector<T>> for &Vector<T> {
 impl<'b, T: Real> Sub<&'b Vector<T>> for &Vector<T> {
     type Output = Vector<T>;
     fn sub(self, rhs: &'b Vector<T>) -> Vector<T> {
-        if self.len() != rhs.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.len(),
-                    found: rhs.len()
-                }
-            );
-        }
+        self.assert_same_dim(rhs);
         let data = self
             .data
             .iter()
@@ -275,7 +221,7 @@ impl<T: Real> Mul<T> for &Vector<T> {
     }
 }
 
-/// Compute the mean vector from a slice of vectors.
+/// Computes the mean vector from a slice of vectors.
 ///
 /// All vectors must have the same dimension. For many vectors (more than `PARALLEL_THRESHOLD`),
 /// the summation is done in parallel.
@@ -305,7 +251,6 @@ pub fn mean_vector<T: Real + Send + Sync>(vectors: &[Vector<T>]) -> Vector<T> {
     } else {
         let mut sum = vec![T::zero(); dim];
         for v in vectors {
-            // Replace explicit index loop with zip iterator.
             for (s, &value) in sum.iter_mut().zip(v.data.iter()) {
                 *s = *s + value;
             }
@@ -330,5 +275,258 @@ impl<T: Real + fmt::Display> fmt::Display for Vector<T> {
             write!(f, "{}", elem)?;
         }
         write!(f, "]")
+    }
+}
+
+//
+// --- SIMD Implementations for f32 ---
+//
+
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+use std::arch::x86_64::*;
+
+impl Vector<f32> {
+    /// Compute the dot product using SIMD instructions (AVX2) if available,
+    /// falling back to a scalar loop without copying the input.
+    pub fn simd_dot(&self, other: &Self) -> f32 {
+        self.assert_same_dim(other);
+        let n = self.len();
+        let a = &self.data;
+        let b = &other.data;
+        let mut sum = 0.0;
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        {
+            if is_x86_feature_detected!("avx2") {
+                unsafe {
+                    let mut acc = _mm256_setzero_ps();
+                    let mut i = 0;
+                    while i + 8 <= n {
+                        let va = _mm256_loadu_ps(a.as_ptr().add(i));
+                        let vb = _mm256_loadu_ps(b.as_ptr().add(i));
+                        let prod = _mm256_mul_ps(va, vb);
+                        acc = _mm256_add_ps(acc, prod);
+                        i += 8;
+                    }
+                    let mut tmp = [0.0f32; 8];
+                    _mm256_storeu_ps(tmp.as_mut_ptr(), acc);
+                    for &x in &tmp {
+                        sum += x;
+                    }
+                    for i in i..n {
+                        sum += a[i] * b[i];
+                    }
+                    return sum;
+                }
+            }
+        }
+        // Fallback to scalar computation.
+        for i in 0..n {
+            sum += a[i] * b[i];
+        }
+        sum
+    }
+
+    /// Compute the Euclidean norm using the SIMD dot product.
+    pub fn simd_norm(&self) -> f32 {
+        self.simd_dot(self).sqrt()
+    }
+
+    /// Compute the squared Euclidean distance using the SIMD dot product.
+    pub fn simd_distance2(&self, other: &Self) -> f32 {
+        let diff = self - other;
+        diff.simd_dot(&diff)
+    }
+}
+
+/// Compute the squared Euclidean distance between two slices using SIMD if available.
+#[inline]
+fn simd_distance2(a: &[f32], b: &[f32]) -> f32 {
+    assert_eq!(a.len(), b.len(), "Slices must have the same length");
+    let n = a.len();
+    let mut sum = 0.0;
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        if is_x86_feature_detected!("avx2") {
+            unsafe {
+                let mut acc = _mm256_setzero_ps();
+                let mut i = 0;
+                while i + 8 <= n {
+                    let va = _mm256_loadu_ps(a.as_ptr().add(i));
+                    let vb = _mm256_loadu_ps(b.as_ptr().add(i));
+                    let diff = _mm256_sub_ps(va, vb);
+                    let diff2 = _mm256_mul_ps(diff, diff);
+                    acc = _mm256_add_ps(acc, diff2);
+                    i += 8;
+                }
+                let mut tmp = [0.0f32; 8];
+                _mm256_storeu_ps(tmp.as_mut_ptr(), acc);
+                for &x in &tmp {
+                    sum += x;
+                }
+                for i in i..n {
+                    let d = a[i] - b[i];
+                    sum += d * d;
+                }
+                return sum;
+            }
+        }
+    }
+    for i in 0..n {
+        let d = a[i] - b[i];
+        sum += d * d;
+    }
+    sum
+}
+
+/// Helper to find the index of the nearest centroid to a given vector.
+fn find_nearest(v: &Vector<f32>, centroids: &[Vector<f32>]) -> usize {
+    let (best_idx, _) = centroids.iter().enumerate().fold(
+        (0, simd_distance2(&v.data, &centroids[0].data)),
+        |(best_idx, best_dist), (i, centroid)| {
+            let dist = simd_distance2(&v.data, &centroid.data);
+            if dist < best_dist {
+                (i, dist)
+            } else {
+                (best_idx, best_dist)
+            }
+        },
+    );
+    best_idx
+}
+
+/// Quantizes the input data into `k` clusters using the LBG algorithm.
+///
+/// The function randomly selects `k` initial centroids and iteratively refines them by
+/// assigning each data point to the nearest centroid and then recomputing the centroids.
+/// Parallel iteration is used for assignments and cluster grouping when possible.
+///
+/// # Parameters
+/// - `data`: A slice of vectors to quantize.
+/// - `k`: The number of clusters (must be > 0 and ≤ number of data points).
+/// - `max_iters`: Maximum iterations for the refinement process.
+/// - `seed`: A seed for random number generation to ensure reproducibility.
+///
+/// # Returns
+/// A vector of centroids (quantized vectors).
+///
+/// # Panics
+/// - If `k` is 0.
+/// - If there are fewer data points than clusters.
+pub fn lbg_quantize(
+    data: &[Vector<f32>],
+    k: usize,
+    max_iters: usize,
+    seed: u64,
+) -> Vec<Vector<f32>> {
+    let n = data.len();
+    if k == 0 {
+        panic!(
+            "{}",
+            VqError::InvalidParameter("k must be greater than 0".to_string())
+        );
+    }
+    if n < k {
+        panic!(
+            "{}",
+            VqError::InvalidParameter("Not enough data points for k clusters".to_string())
+        );
+    }
+
+    let mut rng = StdRng::seed_from_u64(seed);
+    // Randomly select k initial centroids.
+    let mut centroids: Vec<Vector<f32>> = data.choose_multiple(&mut rng, k).cloned().collect();
+    let mut assignments = vec![0; n];
+
+    for _ in 0..max_iters {
+        // Assignment step: assign each vector to the nearest centroid.
+        let new_assignments: Vec<usize> = data
+            .par_iter()
+            .map(|v| find_nearest(v, &centroids))
+            .collect();
+
+        // Check if any assignment changed.
+        let changed = new_assignments
+            .iter()
+            .zip(assignments.iter())
+            .any(|(new, old)| new != old);
+        assignments = new_assignments;
+
+        // Update step: group data points into clusters.
+        let clusters: Vec<Vec<Vector<f32>>> = (0..k)
+            .into_par_iter()
+            .map(|cluster_idx| {
+                data.iter()
+                    .zip(assignments.iter())
+                    .filter(|(_, &assign)| assign == cluster_idx)
+                    .map(|(v, _)| v.clone())
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+
+        // Recompute centroids for each cluster.
+        for j in 0..k {
+            if !clusters[j].is_empty() {
+                centroids[j] = mean_vector(&clusters[j]);
+            } else {
+                // Reinitialize an empty cluster with a random data point.
+                centroids[j] = data.choose(&mut rng).unwrap().clone();
+            }
+        }
+
+        if !changed {
+            break;
+        }
+    }
+    centroids
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::vector::Vector;
+
+    /// Create test data.
+    fn get_data() -> Vec<Vector<f32>> {
+        vec![
+            Vector::new(vec![1.0, 2.0]),
+            Vector::new(vec![2.0, 3.0]),
+            Vector::new(vec![3.0, 4.0]),
+            Vector::new(vec![4.0, 5.0]),
+        ]
+    }
+
+    #[test]
+    fn lbg_quantize_basic_functionality() {
+        let data = get_data();
+        let centroids = crate::vector::lbg_quantize(&data, 2, 10, 42);
+        assert_eq!(centroids.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "k must be greater than 0")]
+    fn lbg_quantize_k_zero() {
+        let data = vec![Vector::new(vec![1.0, 2.0]), Vector::new(vec![2.0, 3.0])];
+        crate::vector::lbg_quantize(&data, 0, 10, 42);
+    }
+
+    #[test]
+    #[should_panic(expected = "Not enough data points for k clusters")]
+    fn lbg_quantize_not_enough_data_points() {
+        let data = vec![Vector::new(vec![1.0, 2.0])];
+        crate::vector::lbg_quantize(&data, 2, 10, 42);
+    }
+
+    #[test]
+    fn lbg_quantize_single_data_point() {
+        let data = vec![Vector::new(vec![1.0, 2.0])];
+        let centroids = crate::vector::lbg_quantize(&data, 1, 10, 42);
+        assert_eq!(centroids.len(), 1);
+        assert_eq!(centroids[0], Vector::new(vec![1.0, 2.0]));
+    }
+
+    #[test]
+    fn lbg_quantize_multiple_iterations() {
+        let data = get_data();
+        let centroids = crate::vector::lbg_quantize(&data, 2, 100, 42);
+        assert_eq!(centroids.len(), 2);
     }
 }
