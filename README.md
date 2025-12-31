@@ -1,15 +1,15 @@
 ## Vq
 
-[<img alt="tests" src="https://img.shields.io/github/actions/workflow/status/habedi/vq/tests.yml?label=tests&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/habedi/vq/actions/workflows/tests.yml)
-[<img alt="lints" src="https://img.shields.io/github/actions/workflow/status/habedi/vq/lints.yml?label=lints&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/habedi/vq/actions/workflows/lints.yml)
-[<img alt="code coverage" src="https://img.shields.io/codecov/c/github/habedi/vq?style=flat&labelColor=555555&logo=codecov" height="20">](https://codecov.io/gh/habedi/vq)
-[<img alt="codefactor" src="https://img.shields.io/codefactor/grade/github/habedi/vq?style=flat&labelColor=555555&logo=codefactor" height="20">](https://www.codefactor.io/repository/github/habedi/vq)
+[<img alt="tests" src="https://img.shields.io/github/actions/workflow/status/CogitatorTech/vq/tests.yml?label=tests&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/CogitatorTech/vq/actions/workflows/tests.yml)
+[<img alt="lints" src="https://img.shields.io/github/actions/workflow/status/CogitatorTech/vq/lints.yml?label=lints&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/CogitatorTech/vq/actions/workflows/lints.yml)
+[<img alt="code coverage" src="https://img.shields.io/codecov/c/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codecov" height="20">](https://codecov.io/gh/CogitatorTech/vq)
+[<img alt="codefactor" src="https://img.shields.io/codefactor/grade/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codefactor" height="20">](https://www.codefactor.io/repository/github/CogitatorTech/vq)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/vq.svg?label=crates.io&style=flat&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-vq-66c2a5?label=docs.rs&style=flat&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/vq)
 [<img alt="downloads" src="https://img.shields.io/crates/d/vq?label=downloads&style=flat&labelColor=555555&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="msrv" src="https://img.shields.io/badge/msrv-1.83.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.83.0)
-[<img alt="dependencies" src="https://deps.rs/repo/github/habedi/vq/status.svg">](https://deps.rs/repo/github/habedi/vq)
-[<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/habedi/vq)
+[<img alt="dependencies" src="https://deps.rs/repo/github/CogitatorTech/vq/status.svg">](https://deps.rs/repo/github/CogitatorTech/vq)
+[<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/CogitatorTech/vq)
 
 Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
 It provides implementations of popular quantization algorithms, including Binary Quantization (BQ), Scalar
