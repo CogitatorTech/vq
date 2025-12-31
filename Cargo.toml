@@ -28,8 +28,9 @@ name = "vq"
 path = "src/lib.rs"
 
 [features]
-default = []  # No features enabled by default
+default = []
 binaries = []
+all = ["binaries"]
 
 [[bin]]
 name = "eval"

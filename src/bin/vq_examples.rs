@@ -6,9 +6,7 @@ use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
 use vq::distance::Distance;
-use vq::opq::OptimizedProductQuantizer;
 use vq::pq::ProductQuantizer;
-use vq::rvq::ResidualQuantizer;
 use vq::tsvq::TSVQ;
 use vq::vector::Vector;
 
@@ -40,12 +38,10 @@ fn main() {
 
 /// Runs examples for all available quantizers.
 fn example_quantizers(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
-    example_bq(test_vector);
-    example_sq(test_vector);
+    example_bq(test_vector.data());
+    example_sq(test_vector.data());
     example_pq(training_data, test_vector);
-    example_opq(training_data, test_vector);
     example_tsvq(training_data, test_vector);
-    example_rvq(training_data, test_vector);
 }
 
 /// Example: Binary Quantizer (BQ).
@@ -64,7 +60,7 @@ fn example_bq(v: &[f32]) {
 
 /// Example: Scalar Quantizer (SQ).
 /// Divides the value range into a fixed number of levels.
-fn example_sq(v: &Vector<f32>) {
+fn example_sq(v: &[f32]) {
     use vq::sq::ScalarQuantizer;
     // Quantize values from -1 to 1 into 5 levels.
     let quantizer = ScalarQuantizer::new(
@@ -92,23 +88,6 @@ fn example_pq(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
     println!("Product Quantizer output: {}", quantized);
 }
 
-/// Example: Optimized Product Quantizer (OPQ).
-/// Similar to PQ but with additional optimization steps.
-fn example_opq(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
-    // Fit an OPQ with extra steps (5 iterations for OPQ-specific optimization).
-    let opq = OptimizedProductQuantizer::fit(
-        training_data,
-        2,                   // Number of subquantizers.
-        2,                   // Number of centroids per subquantizer.
-        20,                  // Maximum iterations for PQ.
-        5,                   // Maximum iterations for OPQ-specific optimization.
-        Distance::Euclidean, // Distance metric to use for quantization.
-        43,                  // Seed for random number generation.
-    );
-    let quantized = opq.quantize(test_vector);
-    println!("Optimized Product Quantizer output: {}", quantized);
-}
-
 /// Example: Tree-Structured Vector Quantizer (TSVQ).
 /// Builds a binary tree for quantization.
 fn example_tsvq(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
@@ -120,21 +99,4 @@ fn example_tsvq(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
     );
     let quantized = tsvq.quantize(test_vector);
     println!("Tree-Structured Quantizer output: {}", quantized);
-}
-
-/// Example: Residual Quantizer (RVQ).
-/// Approximates the vector as a sum of quantized codewords.
-fn example_rvq(training_data: &[Vector<f32>], test_vector: &Vector<f32>) {
-    // Fit an RVQ with 2 stages and a very small error threshold.
-    let rvq = ResidualQuantizer::fit(
-        training_data,       // Training data.
-        2,                   // Number of stages.
-        2,                   // Number of centroids per stage.
-        20,                  // Maximum iterations.
-        10e-6,               // Error threshold.
-        Distance::Euclidean, // Distance metric to use for quantization.
-        53,                  // Seed for random number generation.
-    );
-    let quantized = rvq.quantize(test_vector);
-    println!("Residual Quantizer output: {}", quantized);
 }
