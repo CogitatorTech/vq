@@ -13,7 +13,6 @@ use std::ops::{Add, Div, Mul, Sub};
 use crate::exceptions::VqError;
 
 use rand::prelude::{IndexedRandom, SeedableRng, StdRng};
-use rand::seq::SliceRandom;
 
 /// Size threshold for enabling parallel computation (via multi-threading).
 pub const PARALLEL_THRESHOLD: usize = 1024;

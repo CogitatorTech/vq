@@ -2,6 +2,7 @@
 use std::arch::x86_64::*;
 
 /// Enum listing the available distance metrics.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Distance {
     SquaredEuclidean,
     Euclidean,
