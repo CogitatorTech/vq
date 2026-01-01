@@ -67,9 +67,7 @@ impl ScalarQuantizer {
     /// A new vector (`Vector<u8>`) containing the quantized values.
     pub fn quantize(&self, slice: &[f32]) -> Vector<u8> {
         let n = slice.len();
-        let mut output = Vec::<u8>::with_capacity(n);
-        // Pre-allocate the full output.
-        output.resize(n, 0u8);
+        let mut output = vec![0u8; n];
 
         if n > PARALLEL_THRESHOLD {
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
@@ -148,5 +146,76 @@ impl ScalarQuantizer {
         let clamped = x.max(self.min).min(self.max);
         let index = ((clamped - self.min) / self.step).round() as usize;
         index.min(self.levels - 1)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+
+    fn generate_test_vector(rng: &mut StdRng, dim: usize) -> Vec<f32> {
+        (0..dim)
+            .map(|_| rng.random_range(-1000.0..1000.0))
+            .collect()
+    }
+
+    #[test]
+    fn test_scalar_quantizer_on_scalars() {
+        let quantizer = ScalarQuantizer::new(-1.0, 1.0, 5);
+        let test_values = vec![-1.2, -1.0, -0.8, -0.3, 0.0, 0.3, 0.6, 1.0, 1.2];
+        for x in test_values {
+            let indices = quantizer.quantize(&[x]);
+            assert_eq!(indices.len(), 1);
+            let reconstructed = quantizer.min + indices.data[0] as f32 * quantizer.step;
+            let clamped = x.clamp(quantizer.min, quantizer.max);
+            let error = (reconstructed - clamped).abs();
+            let max_error = quantizer.step / 2.0;
+            assert!(
+                error <= max_error + 1e-6,
+                "Reconstruction error {} too high for input {}",
+                error,
+                x
+            );
+        }
+    }
+
+    #[test]
+    fn test_scalar_quantizer_on_large_vectors() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let n = 100;
+        let dim = 1024;
+        let quantizer = ScalarQuantizer::new(-1000.0, 1000.0, 256);
+
+        for _ in 0..n {
+            let vector = generate_test_vector(&mut rng, dim);
+            let indices = quantizer.quantize(&vector);
+            assert_eq!(indices.len(), dim);
+
+            for (&orig, &idx) in vector.iter().zip(indices.data.iter()) {
+                let reconstructed = quantizer.min + idx as f32 * quantizer.step;
+                let clamped = orig.clamp(quantizer.min, quantizer.max);
+                let error = (clamped - reconstructed).abs();
+                assert!(
+                    error <= quantizer.step / 2.0 + 1e-6,
+                    "Error {} exceeds max for {}",
+                    error,
+                    orig
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "max must be greater than min")]
+    fn test_scalar_quantizer_invalid_range() {
+        ScalarQuantizer::new(1.0, -1.0, 5);
+    }
+
+    #[test]
+    #[should_panic(expected = "levels must be at least 2")]
+    fn test_scalar_quantizer_too_few_levels() {
+        ScalarQuantizer::new(-1.0, 1.0, 1);
     }
 }

@@ -221,3 +221,72 @@ fn compute_cosine_scalar(a: &[f32], b: &[f32]) -> f32 {
         1.0 - (dot / (norm_a_sq * norm_b_sq))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::vector::PARALLEL_THRESHOLD;
+
+    fn approx_eq(a: f32, b: f32, eps: f32) -> bool {
+        (a - b).abs() < eps
+    }
+
+    #[test]
+    fn test_squared_euclidean_sequential() {
+        let a = vec![1.0f32, 2.0, 3.0];
+        let b = vec![4.0f32, 6.0, 8.0];
+        // (1-4)² + (2-6)² + (3-8)² = 9 + 16 + 25 = 50
+        let result = Distance::SquaredEuclidean.compute(&a, &b);
+        assert!(approx_eq(result, 50.0, 1e-6));
+    }
+
+    #[test]
+    fn test_squared_euclidean_parallel() {
+        let len = PARALLEL_THRESHOLD + 10;
+        let a: Vec<f32> = (0..len).map(|i| i as f32).collect();
+        let b: Vec<f32> = (0..len).map(|i| (i as f32) + 1.0).collect();
+        let result = Distance::SquaredEuclidean.compute(&a, &b);
+        assert!(approx_eq(result, len as f32, 1e-6));
+    }
+
+    #[test]
+    fn test_euclidean_sequential() {
+        let a = vec![1.0f32, 2.0, 3.0];
+        let b = vec![4.0f32, 6.0, 8.0];
+        let expected = 50.0f32.sqrt();
+        let result = Distance::Euclidean.compute(&a, &b);
+        assert!(approx_eq(result, expected, 1e-6));
+    }
+
+    #[test]
+    fn test_cosine_distance_sequential() {
+        // Orthogonal vectors: cosine similarity = 0, so distance = 1.
+        let a = vec![1.0f32, 0.0];
+        let b = vec![0.0f32, 1.0];
+        let result = Distance::CosineDistance.compute(&a, &b);
+        assert!(approx_eq(result, 1.0, 1e-6));
+
+        // Identical vectors: cosine similarity = 1, so distance = 0.
+        let a = vec![1.0f32, 1.0];
+        let b = vec![1.0f32, 1.0];
+        let result = Distance::CosineDistance.compute(&a, &b);
+        assert!(approx_eq(result, 0.0, 1e-6));
+    }
+
+    #[test]
+    fn test_manhattan_sequential() {
+        let a = vec![1.0f32, 2.0, 3.0];
+        let b = vec![4.0f32, 6.0, 8.0];
+        // |1-4| + |2-6| + |3-8| = 3 + 4 + 5 = 12
+        let result = Distance::Manhattan.compute(&a, &b);
+        assert!(approx_eq(result, 12.0, 1e-6));
+    }
+
+    #[test]
+    #[should_panic(expected = "Dimension mismatch")]
+    fn test_compute_mismatched_lengths() {
+        let a = vec![1.0f32, 2.0];
+        let b = vec![1.0f32];
+        Distance::Euclidean.compute(&a, &b);
+    }
+}

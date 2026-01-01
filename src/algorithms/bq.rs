@@ -79,9 +79,9 @@ impl BinaryQuantizer {
                                 // Using 14 (_CMP_GE_OS) as the compare predicate.
                                 let cmp = _mm256_cmp_ps::<14>(v, threshold_vec);
                                 let mask = _mm256_movemask_ps(cmp);
-                                for j in 0..8 {
+                                for (j, out_val) in out_chunk.iter_mut().enumerate().take(8) {
                                     let bit = (mask >> j) & 1;
-                                    out_chunk[j] = if bit == 1 { self.high } else { self.low };
+                                    *out_val = if bit == 1 { self.high } else { self.low };
                                 }
                             }
                             return;
@@ -141,4 +141,51 @@ fn quantize_simd(slice: &[f32], threshold: f32, low: u8, high: u8) -> Vec<u8> {
         result[i] = if x >= threshold { high } else { low };
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+
+    fn generate_test_vector(rng: &mut StdRng, dim: usize) -> Vec<f32> {
+        (0..dim)
+            .map(|_| rng.random_range(-1000.0..1000.0))
+            .collect()
+    }
+
+    #[test]
+    fn test_binary_quantizer_basic() {
+        let quantizer = BinaryQuantizer::new(0.0, 0, 1);
+        let input = vec![-1.0, 0.0, 1.0, -0.5, 0.5];
+        let result = quantizer.quantize(&input);
+        assert_eq!(result.data, vec![0, 1, 1, 0, 1]);
+    }
+
+    #[test]
+    fn test_binary_quantizer_large_vector() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let dim = 1024;
+        let vector = generate_test_vector(&mut rng, dim);
+
+        let quantizer = BinaryQuantizer::new(0.0, 0, 1);
+        let quantized = quantizer.quantize(&vector);
+        assert_eq!(quantized.data.len(), dim);
+
+        for (i, &val) in quantized.data.iter().enumerate() {
+            let expected = if vector[i] >= 0.0 { 1 } else { 0 };
+            assert_eq!(
+                val, expected,
+                "At index {}: expected {} but got {}",
+                i, expected, val
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Low quantization level must be less than high")]
+    fn test_binary_quantizer_invalid_levels() {
+        BinaryQuantizer::new(0.0, 1, 0);
+    }
 }

@@ -30,7 +30,8 @@ pub struct BenchmarkResult {
 /// Generate synthetic data as a `Vec<Vector<f32>>` using the given seed.
 pub fn generate_synthetic_data(n_samples: usize, n_dims: usize, seed: u64) -> Vec<Vector<f32>> {
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-    // Unwrap is safe here because the distribution creation is unlikely to fail.
+    // Safety: Uniform::new only fails if min >= max, which is not the case here.
+    #[allow(clippy::unwrap_used)]
     let uniform = Uniform::new(0.0, 1.0).unwrap();
     (0..n_samples)
         .map(|_| {
@@ -98,7 +99,7 @@ pub fn calculate_recall(original: &[Vector<f32>], approx: &[Vector<f32>], k: usi
             .filter(|&j| j != i)
             .map(|j| (j, euclidean_distance(query, &original[j])))
             .collect();
-        true_neighbors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        true_neighbors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         let true_neighbors: Vec<usize> =
             true_neighbors.iter().take(k).map(|&(idx, _)| idx).collect();
 
@@ -107,7 +108,7 @@ pub fn calculate_recall(original: &[Vector<f32>], approx: &[Vector<f32>], k: usi
             .filter(|&j| j != i)
             .map(|j| (j, euclidean_distance(&approx[i], &approx[j])))
             .collect();
-        approx_neighbors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        approx_neighbors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         let approx_neighbors: Vec<usize> = approx_neighbors
             .iter()
             .take(k)

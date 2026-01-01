@@ -187,3 +187,70 @@ impl ProductQuantizer {
         Vector::new(quantized_data)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+
+    fn generate_test_data(rng: &mut StdRng, n: usize, dim: usize) -> Vec<Vector<f32>> {
+        (0..n)
+            .map(|_| {
+                let data: Vec<f32> = (0..dim)
+                    .map(|_| rng.random_range(-1000.0..1000.0))
+                    .collect();
+                Vector::new(data)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn test_pq_on_random_vectors() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let training_data = generate_test_data(&mut rng, 1000, 10);
+        let m = 2;
+        let k = 2;
+        let max_iters = 50;
+        let seed = 42;
+        let pq = ProductQuantizer::fit(
+            &training_data,
+            m,
+            k,
+            max_iters,
+            Distance::SquaredEuclidean,
+            seed,
+        );
+
+        for vector in training_data.iter() {
+            let quantized = pq.quantize(vector);
+            assert_eq!(quantized.len(), vector.len());
+            let reconstructed: Vec<f32> = quantized.data.iter().map(|&x| f16::to_f32(x)).collect();
+            let total_error: f32 = vector
+                .data
+                .iter()
+                .zip(reconstructed.iter())
+                .map(|(orig, recon)| (orig - recon).abs())
+                .sum();
+            assert!(
+                total_error.is_finite(),
+                "Total reconstruction error {} is not finite",
+                total_error
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Empty input")]
+    fn test_pq_empty_training_data() {
+        let empty: Vec<Vector<f32>> = vec![];
+        ProductQuantizer::fit(&empty, 2, 2, 10, Distance::Euclidean, 42);
+    }
+
+    #[test]
+    #[should_panic(expected = "Data dimension must be divisible by m")]
+    fn test_pq_dimension_not_divisible() {
+        let data = vec![Vector::new(vec![1.0, 2.0, 3.0])]; // dim=3, m=2
+        ProductQuantizer::fit(&data, 2, 2, 10, Distance::Euclidean, 42);
+    }
+}

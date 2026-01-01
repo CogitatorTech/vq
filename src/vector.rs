@@ -468,7 +468,10 @@ pub fn lbg_quantize(
                 centroids[j] = mean_vector(&clusters[j]);
             } else {
                 // Reinitialize an empty cluster with a random data point.
-                centroids[j] = data.choose(&mut rng).unwrap().clone();
+                // Safety: data.len() >= k is validated at function start.
+                #[allow(clippy::expect_used)]
+                let random_point = data.choose(&mut rng).expect("data should not be empty");
+                centroids[j] = random_point.clone();
             }
         }
 
@@ -481,9 +484,14 @@ pub fn lbg_quantize(
 
 #[cfg(test)]
 mod tests {
-    use crate::vector::Vector;
+    use super::*;
+    use half::f16;
+    use std::panic;
 
-    /// Create test data.
+    fn approx_eq(a: f32, b: f32, eps: f32) -> bool {
+        (a - b).abs() < eps
+    }
+
     fn get_data() -> Vec<Vector<f32>> {
         vec![
             Vector::new(vec![1.0, 2.0]),
@@ -493,10 +501,127 @@ mod tests {
         ]
     }
 
+    // --- Vector operations tests ---
+
+    #[test]
+    fn test_addition() {
+        let a = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let b = Vector::new(vec![4.0f32, 5.0, 6.0]);
+        let result = &a + &b;
+        assert_eq!(result.data, vec![5.0, 7.0, 9.0]);
+    }
+
+    #[test]
+    fn test_subtraction() {
+        let a = Vector::new(vec![4.0f32, 5.0, 6.0]);
+        let b = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let result = &a - &b;
+        assert_eq!(result.data, vec![3.0, 3.0, 3.0]);
+    }
+
+    #[test]
+    fn test_scalar_multiplication() {
+        let a = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let result = &a * 2.0f32;
+        assert_eq!(result.data, vec![2.0, 4.0, 6.0]);
+    }
+
+    #[test]
+    fn test_dot_product_sequential() {
+        let a = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let b = Vector::new(vec![4.0f32, 5.0, 6.0]);
+        let dot = a.dot(&b);
+        assert!(approx_eq(dot, 32.0, 1e-6));
+    }
+
+    #[test]
+    fn test_dot_product_parallel() {
+        let len = PARALLEL_THRESHOLD + 1;
+        let a = Vector::new((0..len).map(|i| i as f32).collect());
+        let b = Vector::new((0..len).map(|i| (i as f32) * 2.0).collect());
+        let expected: f32 = 2.0 * (0..len).map(|i| (i as f32).powi(2)).sum::<f32>();
+        let dot = a.dot(&b);
+        assert!(approx_eq(dot, expected, 1e3));
+    }
+
+    #[test]
+    fn test_norm() {
+        let a = Vector::new(vec![3.0f32, 4.0]);
+        let norm = a.norm();
+        assert!(approx_eq(norm, 5.0, 1e-6));
+    }
+
+    #[test]
+    fn test_distance2() {
+        let a = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let b = Vector::new(vec![4.0f32, 5.0, 6.0]);
+        let dist2 = a.distance2(&b);
+        assert!(approx_eq(dist2, 27.0, 1e-6));
+    }
+
+    #[test]
+    fn test_mean_vector_sequential() {
+        let vectors = vec![
+            Vector::new(vec![1.0f32, 2.0, 3.0]),
+            Vector::new(vec![4.0f32, 5.0, 6.0]),
+            Vector::new(vec![7.0f32, 8.0, 9.0]),
+        ];
+        let mean = mean_vector(&vectors);
+        assert!(approx_eq(mean.data[0], 4.0, 1e-6));
+        assert!(approx_eq(mean.data[1], 5.0, 1e-6));
+        assert!(approx_eq(mean.data[2], 6.0, 1e-6));
+    }
+
+    #[test]
+    fn test_addition_mismatched_dimensions() {
+        let a = Vector::new(vec![1.0f32, 2.0]);
+        let b = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let result = panic::catch_unwind(|| {
+            let _ = &a + &b;
+        });
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_mean_vector_empty() {
+        let vectors: Vec<Vector<f32>> = vec![];
+        let result = panic::catch_unwind(|| {
+            let _ = mean_vector(&vectors);
+        });
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_display() {
+        let a = Vector::new(vec![1.0f32, 2.0, 3.0]);
+        let s = format!("{}", a);
+        assert!(s.starts_with("Vector ["));
+        assert!(s.ends_with("]"));
+    }
+
+    #[test]
+    fn test_f16_operations() {
+        let a = Vector::new(vec![
+            f16::from_f32(1.0),
+            f16::from_f32(2.0),
+            f16::from_f32(3.0),
+        ]);
+        let b = Vector::new(vec![
+            f16::from_f32(4.0),
+            f16::from_f32(5.0),
+            f16::from_f32(6.0),
+        ]);
+        let dot = a.dot(&b);
+        let dot_f32 = f32::from(dot);
+        assert!((dot_f32 - 32.0).abs() < 1e-1);
+    }
+
+    // --- LBG quantizer tests ---
+
     #[test]
     fn lbg_quantize_basic_functionality() {
         let data = get_data();
-        let centroids = crate::vector::lbg_quantize(&data, 2, 10, 42);
+        let centroids = lbg_quantize(&data, 2, 10, 42);
         assert_eq!(centroids.len(), 2);
     }
 
@@ -504,28 +629,21 @@ mod tests {
     #[should_panic(expected = "k must be greater than 0")]
     fn lbg_quantize_k_zero() {
         let data = vec![Vector::new(vec![1.0, 2.0]), Vector::new(vec![2.0, 3.0])];
-        crate::vector::lbg_quantize(&data, 0, 10, 42);
+        lbg_quantize(&data, 0, 10, 42);
     }
 
     #[test]
     #[should_panic(expected = "Not enough data points for k clusters")]
     fn lbg_quantize_not_enough_data_points() {
         let data = vec![Vector::new(vec![1.0, 2.0])];
-        crate::vector::lbg_quantize(&data, 2, 10, 42);
+        lbg_quantize(&data, 2, 10, 42);
     }
 
     #[test]
     fn lbg_quantize_single_data_point() {
         let data = vec![Vector::new(vec![1.0, 2.0])];
-        let centroids = crate::vector::lbg_quantize(&data, 1, 10, 42);
+        let centroids = lbg_quantize(&data, 1, 10, 42);
         assert_eq!(centroids.len(), 1);
         assert_eq!(centroids[0], Vector::new(vec![1.0, 2.0]));
-    }
-
-    #[test]
-    fn lbg_quantize_multiple_iterations() {
-        let data = get_data();
-        let centroids = crate::vector::lbg_quantize(&data, 2, 100, 42);
-        assert_eq!(centroids.len(), 2);
     }
 }

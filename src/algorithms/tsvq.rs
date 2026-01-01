@@ -99,15 +99,17 @@ impl TSVQNode {
             .collect();
 
         // Select the dimension with maximum variance for splitting.
+        // Safety: variances is non-empty since dim > 0 (training_data is validated non-empty).
+        #[allow(clippy::expect_used)]
         let (split_dim, _) = variances
             .iter()
             .enumerate()
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-            .unwrap();
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .expect("variances should not be empty");
 
         // Extract the values along the chosen dimension and sort them.
         let mut values: Vec<f32> = training_data.iter().map(|v| v.data[split_dim]).collect();
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
         // Compute the median: if even number of elements, use the average of the two middle values.
         let median = if values.len() % 2 == 0 {
@@ -246,5 +248,65 @@ impl TSVQ {
             .map(|&x| f16::from_f32(x))
             .collect();
         Vector::new(centroid_f16)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::{Rng, SeedableRng};
+
+    fn generate_test_data(rng: &mut StdRng, n: usize, dim: usize) -> Vec<Vector<f32>> {
+        (0..n)
+            .map(|_| {
+                let data: Vec<f32> = (0..dim)
+                    .map(|_| rng.random_range(-1000.0..1000.0))
+                    .collect();
+                Vector::new(data)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn test_tsvq_on_identical_vectors() {
+        let training_vector = Vector::new(vec![1.0, 2.0, 3.0, 4.0, 5.0]);
+        let training_data = vec![training_vector.clone(); 10];
+        let max_depth = 3;
+        let tsvq = TSVQ::new(&training_data, max_depth, Distance::SquaredEuclidean);
+        let quantized = tsvq.quantize(&training_vector);
+        assert_eq!(quantized.len(), training_vector.len());
+        let reconstructed: Vec<f32> = quantized.data.iter().map(|&x| f16::to_f32(x)).collect();
+        for (orig, recon) in training_vector.data.iter().zip(reconstructed.iter()) {
+            assert!((orig - recon).abs() < 1e-2);
+        }
+    }
+
+    #[test]
+    fn test_tsvq_on_random_vectors() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let training_data = generate_test_data(&mut rng, 1000, 10);
+        let max_depth = 3;
+        let tsvq = TSVQ::new(&training_data, max_depth, Distance::SquaredEuclidean);
+
+        for vector in training_data.iter() {
+            let quantized = tsvq.quantize(vector);
+            assert_eq!(quantized.len(), vector.len());
+            let reconstructed: Vec<f32> = quantized.data.iter().map(|&x| f16::to_f32(x)).collect();
+            let total_error: f32 = vector
+                .data
+                .iter()
+                .zip(reconstructed.iter())
+                .map(|(a, b)| (a - b).abs())
+                .sum();
+            assert!(total_error.is_finite());
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Empty input")]
+    fn test_tsvq_empty_training_data() {
+        let empty: Vec<Vector<f32>> = vec![];
+        TSVQ::new(&empty, 3, Distance::Euclidean);
     }
 }
