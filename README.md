@@ -20,9 +20,8 @@ search in large datasets.
 ### Features
 
 - Simple and uniform API for all quantization algorithms
-- Fast distance computation using SIMD instructions (SSE and AVX) on AMD64 architecture
-- Parallelized vector operations for large vectors using [Rayon](https://crates.io/crates/rayon)
-- Different distance support, including Euclidean, Cosine, and Manhattan distances
+- All operations return `Result` for proper error handling
+- Supports multiple distance metrics (Euclidean, Cosine, and Manhattan)
 
 ### Quantization Algorithms
 
@@ -56,38 +55,53 @@ Check out [vq_examples.rs](src/bin/vq_examples.rs) the [tests](tests) directory 
 Here's a simple example using the SQ algorithm to quantize a vector:
 
 ```rust
+use vq::bq::BinaryQuantizer;
 use vq::sq::ScalarQuantizer;
-use vq::vector::Vector;
+use vq::VqResult;
 
-fn main() {
-    // Create a scalar quantizer for values in the range [0.0, 1.0] with 256 levels.
-    let quantizer = ScalarQuantizer::new(0.0, 1.0, 256);
-
-    // Create an input vector.
-    let input = Vector::new(vec![0.1, 0.5, -0.8, -0.3, 0.9]);
-
-    // Quantize the input vector.
-    let quantized_input = quantizer.quantize(&input);
-
-    println!("Quantized input vector: {}", quantized_input);
+fn main() -> VqResult<()> {
+    // Binary quantization
+    let bq = BinaryQuantizer::new(0.0, 0, 1)?;
+    let quantized = bq.quantize(&[0.5, -0.3, 0.8]);
+    
+    // Scalar quantization
+    let sq = ScalarQuantizer::new(0.0, 1.0, 256)?;
+    let quantized = sq.quantize(&[0.1, 0.5, 0.9]);
+    
+    Ok(())
 }
 ```
 
-### Performance
+### Product Quantizer Example
 
-Check out the [notebooks](notebooks) directory for information on how to evaluate the performance of the implemented algorithms.
-Additionally, see the content of the [src/bin](src/bin) directory for the scripts used for the evaluation.
+```rust
+use vq::distance::Distance;
+use vq::pq::ProductQuantizer;
+use vq::VqResult;
 
-> On a ThinkPad T14 laptop with an Intel i7-1355U CPU and 32GB of RAM, the performance of the PQ algorithm for
-> quantizing one million vectors of 128 dimensions (into 16 subspaces with 256 centroids per subspace) is as follows:
->   - Training Time: 232.5 seconds
->   - Quantization Time: 34.1 seconds
->   - Reconstruction Error (MSE): 0.02
->   - Recall@10: 0.19
-
-### Contributing
-
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute.
+fn main() -> VqResult<()> {
+    // Training data (each inner slice is a vector)
+    let training: Vec<Vec<f32>> = (0..100)
+        .map(|i| (0..10).map(|j| ((i + j) % 50) as f32).collect())
+        .collect();
+    let training_refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
+    
+    // Train the quantizer
+    let pq = ProductQuantizer::new(
+        &training_refs,
+        2,  // m: number of subspaces
+        4,  // k: centroids per subspace
+        10, // max_iters
+        Distance::Euclidean,
+        42, // seed
+    )?;
+    
+    // Quantize a vector
+    let quantized = pq.quantize(&training[0])?;
+    
+    Ok(())
+}
+```
 
 ### License
 

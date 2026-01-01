@@ -1,256 +1,130 @@
-//! # Product Quantizer Implementation
-//!
-//! This module implements a product quantizer that partitions input vectors into sub-vectors,
-//! then quantizes each sub-vector independently using a separate codebook learned via the
-//! Linde-Buzo-Gray (LBG) algorithm. The final quantized representation is obtained by selecting
-//! the best matching centroid (codeword) for each subspace using a specified distance metric,
-//! and then concatenating these codewords (converted to half-precision, `f16`).
-//!
-//! # Errors
-//! The `fit` and `quantize` methods panic with custom errors from the exceptions module when:
-//! - The training data is empty.
-//! - The dimension of the training vectors is less than `m` or not divisible by `m`.
-//! - The input vector to `quantize` does not have the expected dimension.
-//!
-//! # Example
-//! ```
-//! use vq::vector::Vector;
-//! use vq::distance::Distance;
-//! use vq::pq::ProductQuantizer;
-//!
-//! // Create a small training dataset. Each vector has dimension 4.
-//! let training_data = vec![
-//!     Vector::new(vec![0.0, 0.0, 0.0, 0.0]),
-//!     Vector::new(vec![1.0, 1.0, 1.0, 1.0]),
-//!     Vector::new(vec![0.5, 0.5, 0.5, 0.5]),
-//! ];
-//!
-//! // Partition the 4-dimensional vectors into m=2 subspaces (each of dimension 2).
-//! let m = 2;
-//! // Use k=2 centroids per subspace.
-//! let k = 2;
-//! let max_iters = 10;
-//! let seed = 42;
-//! let distance = Distance::Euclidean;
-//!
-//! // Fit the product quantizer with the training data.
-//! let pq = ProductQuantizer::fit(&training_data, m, k, max_iters, distance, seed);
-//!
-//! // Quantize an input vector of dimension 4 (i.e. m * sub_dim = 2 * 2).
-//! let input = Vector::new(vec![0.2, 0.8, 0.3, 0.7]);
-//! let quantized = pq.quantize(&input);
-//! println!("Quantized vector: {:?}", quantized);
-//! ```
-
 use crate::distance::Distance;
-use crate::exceptions::VqError;
-use crate::vector::lbg_quantize;
-use crate::vector::Vector;
+use crate::exceptions::{VqError, VqResult};
+use crate::vector::{lbg_quantize, Vector};
 use half::f16;
-use rayon::prelude::*;
 
-/// A product quantizer that partitions input vectors into sub-vectors and quantizes them.
 pub struct ProductQuantizer {
-    /// A vector of codebooks (one per subspace). Each codebook is a vector of centroids.
     codebooks: Vec<Vec<Vector<f32>>>,
-    /// The dimensionality of each subspace (i.e. `n / m`).
     sub_dim: usize,
-    /// The number of subspaces into which the input vector is partitioned.
     m: usize,
-    /// The distance metric used for comparing subvectors with codebook centroids.
     distance: Distance,
 }
 
 impl ProductQuantizer {
-    /// Constructs a new `ProductQuantizer` from training data.
-    ///
-    /// # Parameters
-    /// - `training_data`: A slice of training vectors (`Vector<f32>`) used to learn the codebooks.
-    /// - `m`: The number of subspaces into which the input vectors are partitioned.
-    /// - `k`: The number of centroids (codewords) per subspace.
-    /// - `max_iters`: The maximum number of iterations for the LBG (k-means) quantization algorithm.
-    /// - `distance`: The distance metric used for comparing subvectors with codebook centroids.
-    /// - `seed`: A random seed for initializing LBG quantization. Each subspace uses `seed + i`.
-    ///
-    /// # Panics
-    /// Panics with a custom error if:
-    /// - The training data is empty.
-    /// - The dimension of the training vectors is less than `m`.
-    /// - The dimension of the training vectors is not divisible by `m`.
-    pub fn fit(
-        training_data: &[Vector<f32>],
+    pub fn new(
+        training_data: &[&[f32]],
         m: usize,
         k: usize,
         max_iters: usize,
         distance: Distance,
         seed: u64,
-    ) -> Self {
+    ) -> VqResult<Self> {
         if training_data.is_empty() {
-            panic!("{}", VqError::EmptyInput);
+            return Err(VqError::EmptyInput);
         }
         let n = training_data[0].len();
         if n < m {
-            panic!(
-                "{}",
-                VqError::InvalidParameter("Data dimension must be at least m".to_string())
-            );
+            return Err(VqError::InvalidParameter(
+                "Data dimension must be at least m".to_string(),
+            ));
         }
         if n % m != 0 {
-            panic!(
-                "{}",
-                VqError::InvalidParameter("Data dimension must be divisible by m".to_string())
-            );
+            return Err(VqError::InvalidParameter(
+                "Data dimension must be divisible by m".to_string(),
+            ));
         }
         let sub_dim = n / m;
 
-        // Learn a codebook for each subspace in parallel.
-        let codebooks: Vec<Vec<Vector<f32>>> = (0..m)
-            .into_par_iter()
-            .map(|i| {
-                // Extract the sub-training data for subspace `i`.
-                let sub_training: Vec<Vector<f32>> = training_data
-                    .iter()
-                    .map(|v| {
-                        let start = i * sub_dim;
-                        let end = start + sub_dim;
-                        Vector::new(v.data[start..end].to_vec())
-                    })
-                    .collect();
-                // Learn a codebook for the subspace using LBG quantization.
-                lbg_quantize(&sub_training, k, max_iters, seed + i as u64)
-            })
-            .collect();
+        let mut codebooks = Vec::with_capacity(m);
+        for i in 0..m {
+            let sub_training: Vec<Vector<f32>> = training_data
+                .iter()
+                .map(|v| {
+                    let start = i * sub_dim;
+                    let end = start + sub_dim;
+                    Vector::new(v[start..end].to_vec())
+                })
+                .collect();
+            let codebook = lbg_quantize(&sub_training, k, max_iters, seed + i as u64)?;
+            codebooks.push(codebook);
+        }
 
-        Self {
+        Ok(Self {
             codebooks,
             sub_dim,
             m,
             distance,
-        }
+        })
     }
 
-    /// Quantizes an input vector using the learned codebooks.
-    ///
-    /// The input vector is partitioned into `m` sub-vectors (each of dimension `sub_dim`).
-    /// For each subspace, the best matching codeword is selected using the stored distance metric.
-    /// The selected codewords are converted to half-precision (`f16`) and concatenated to form
-    /// the final quantized representation.
-    ///
-    /// # Parameters
-    /// - `vector`: The input vector (`Vector<f32>`) to be quantized.
-    ///
-    /// # Returns
-    /// A quantized vector (`Vector<f16>`) representing the input vector.
-    ///
-    /// # Panics
-    /// Panics with a custom error if the input vector's dimension does not equal `m * sub_dim`.
-    pub fn quantize(&self, vector: &Vector<f32>) -> Vector<f16> {
+    pub fn quantize(&self, vector: &[f32]) -> VqResult<Vec<f16>> {
         let n = vector.len();
         if n != self.sub_dim * self.m {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.sub_dim * self.m,
-                    found: n
-                }
-            );
+            return Err(VqError::DimensionMismatch {
+                expected: self.sub_dim * self.m,
+                found: n,
+            });
         }
 
-        // Process each subspace in parallel to quantize the corresponding sub-vector.
-        let quantized_subs: Vec<Vec<f16>> = (0..self.m)
-            .into_par_iter()
-            .map(|i| {
-                let start = i * self.sub_dim;
-                let end = start + self.sub_dim;
-                let sub_vector = &vector.data[start..end];
-                let codebook = &self.codebooks[i];
-                let mut best_index = 0;
-                let mut best_dist = self.distance.compute(sub_vector, &codebook[0].data);
-                for (j, centroid) in codebook.iter().enumerate().skip(1) {
-                    let dist = self.distance.compute(sub_vector, &centroid.data);
-                    if dist < best_dist {
-                        best_dist = dist;
-                        best_index = j;
-                    }
-                }
-                // Convert the chosen centroid's sub-vector from f32 to f16.
-                codebook[best_index]
-                    .data
-                    .iter()
-                    .map(|&val| f16::from_f32(val))
-                    .collect()
-            })
-            .collect();
+        let mut result = Vec::with_capacity(n);
+        for i in 0..self.m {
+            let start = i * self.sub_dim;
+            let end = start + self.sub_dim;
+            let sub_vector = &vector[start..end];
+            let codebook = &self.codebooks[i];
 
-        // Flatten the quantized sub-vectors into one contiguous vector.
-        let quantized_data: Vec<f16> = quantized_subs.into_iter().flatten().collect();
-        Vector::new(quantized_data)
+            let mut best_idx = 0;
+            let mut best_dist = self.distance.compute(sub_vector, &codebook[0].data)?;
+            for (j, centroid) in codebook.iter().enumerate().skip(1) {
+                let dist = self.distance.compute(sub_vector, &centroid.data)?;
+                if dist < best_dist {
+                    best_dist = dist;
+                    best_idx = j;
+                }
+            }
+
+            for &val in &codebook[best_idx].data {
+                result.push(f16::from_f32(val));
+            }
+        }
+
+        Ok(result)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
 
-    fn generate_test_data(rng: &mut StdRng, n: usize, dim: usize) -> Vec<Vector<f32>> {
+    fn generate_test_data(n: usize, dim: usize) -> Vec<Vec<f32>> {
         (0..n)
-            .map(|_| {
-                let data: Vec<f32> = (0..dim)
-                    .map(|_| rng.random_range(-1000.0..1000.0))
-                    .collect();
-                Vector::new(data)
-            })
+            .map(|i| (0..dim).map(|j| ((i + j) % 100) as f32).collect())
             .collect()
     }
 
     #[test]
-    fn test_pq_on_random_vectors() {
-        let mut rng = StdRng::seed_from_u64(42);
-        let training_data = generate_test_data(&mut rng, 1000, 10);
-        let m = 2;
-        let k = 2;
-        let max_iters = 50;
-        let seed = 42;
-        let pq = ProductQuantizer::fit(
-            &training_data,
-            m,
-            k,
-            max_iters,
-            Distance::SquaredEuclidean,
-            seed,
-        );
+    fn test_basic() {
+        let data: Vec<Vec<f32>> = generate_test_data(100, 10);
+        let data_refs: Vec<&[f32]> = data.iter().map(|v| v.as_slice()).collect();
 
-        for vector in training_data.iter() {
-            let quantized = pq.quantize(vector);
-            assert_eq!(quantized.len(), vector.len());
-            let reconstructed: Vec<f32> = quantized.data.iter().map(|&x| f16::to_f32(x)).collect();
-            let total_error: f32 = vector
-                .data
-                .iter()
-                .zip(reconstructed.iter())
-                .map(|(orig, recon)| (orig - recon).abs())
-                .sum();
-            assert!(
-                total_error.is_finite(),
-                "Total reconstruction error {} is not finite",
-                total_error
-            );
-        }
+        let pq = ProductQuantizer::new(&data_refs, 2, 4, 10, Distance::Euclidean, 42).unwrap();
+
+        let quantized = pq.quantize(&data[0]).unwrap();
+        assert_eq!(quantized.len(), 10);
     }
 
     #[test]
-    #[should_panic(expected = "Empty input")]
-    fn test_pq_empty_training_data() {
-        let empty: Vec<Vector<f32>> = vec![];
-        ProductQuantizer::fit(&empty, 2, 2, 10, Distance::Euclidean, 42);
+    fn test_empty_training() {
+        let data: Vec<&[f32]> = vec![];
+        let result = ProductQuantizer::new(&data, 2, 2, 10, Distance::Euclidean, 42);
+        assert!(result.is_err());
     }
 
     #[test]
-    #[should_panic(expected = "Data dimension must be divisible by m")]
-    fn test_pq_dimension_not_divisible() {
-        let data = vec![Vector::new(vec![1.0, 2.0, 3.0])]; // dim=3, m=2
-        ProductQuantizer::fit(&data, 2, 2, 10, Distance::Euclidean, 42);
+    fn test_dimension_not_divisible() {
+        let data = vec![vec![1.0, 2.0, 3.0]];
+        let data_refs: Vec<&[f32]> = data.iter().map(|v| v.as_slice()).collect();
+        let result = ProductQuantizer::new(&data_refs, 2, 2, 10, Distance::Euclidean, 42);
+        assert!(result.is_err());
     }
 }

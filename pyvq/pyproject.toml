@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/habedi/vq"
-documentation = "https://github.com/habedi/vq"
-repository = "https://github.com/habedi/vq"
+homepage = "https://github.com/CogitatorTech/vq"
+documentation = "https://github.com/CogitatorTech/vq"
+repository = "https://github.com/CogitatorTech/vq"
 
 [tool.maturin]
 module-name = "pyvq"

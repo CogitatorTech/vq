@@ -1,6 +1,6 @@
 [package]
 name = "pyvq"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha.1"
 edition = "2021"
 publish = false
 
