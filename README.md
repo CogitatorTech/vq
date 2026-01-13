@@ -48,7 +48,9 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
 ---
 
-### Installation
+### Getting Started
+
+#### Installation
 
 Add `vq` to your `Cargo.toml`:
 
@@ -73,15 +75,15 @@ cargo add vq --features all
 
 *Vq requires Rust 1.83 or later.*
 
-### Python Bindings
+#### Python Bindings
 
 Python bindings are available in the `pyvq` directory.
 
+---
+
 ### Documentation
 
-Find the latest API documentation on [docs.rs](https://docs.rs/vq).
-
-Check out [vq_examples.rs](src/bin/vq_examples.rs) the [tests](tests) directory for detailed examples of using Vq.
+Check out the latest API documentation on [docs.rs](https://docs.rs/vq).
 
 #### Quick Example
 
