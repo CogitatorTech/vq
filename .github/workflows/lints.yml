@@ -1,10 +1,20 @@
 name: Run Linters
 
 on:
-  workflow_dispatch: { } # Allow manual execution
-  push:
-    tags:
-      - 'v*' # Trigger on version tags
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:

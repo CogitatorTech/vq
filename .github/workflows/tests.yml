@@ -1,8 +1,20 @@
 name: Run Tests
 
 on:
-  workflow_dispatch: { } # Allow manual execution
-  workflow_call: # Make this workflow callable from other workflows
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
