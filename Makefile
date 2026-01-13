@@ -143,8 +143,8 @@ eval: ## Evaluate an implementation (ALG must be: bq, sq, pq, or tsvq)
 	if [ -z "$(ALG)" ]; then \
 	  echo "Please provide the ALG argument"; exit 1; \
 	fi
-	@echo "Evaluating implementation with argument: $(ALG)"
-	@cargo run --release --features binaries --bin eval -- --eval $(ALG)
+	@echo "Evaluating implementation: $(ALG)"
+	@cargo run --release --features binaries --bin eval_$(ALG)
 
 .PHONY: eval-all
 eval-all: ## Evaluate all the implementations (bq, sq, pq, and tsvq)
@@ -164,15 +164,6 @@ install-msrv: ## Install the minimum supported Rust version (MSRV) for developme
 	@echo "Installing the minimum supported Rust version..."
 	@rustup toolchain install $(MSRV)
 	@rustup default $(MSRV)
-
-.PHONY: run-examples
-run-examples: ## Run all the scripts in the examples directory one by one
-	@echo "Running all example scripts..."
-	@for example in examples/*.rs; do \
-	   example_name=$$(basename $$example .rs); \
-	   echo "Running example: $$example_name"; \
-	   cargo run --features all --example $$example_name; \
-	done
 
 ########################################################################################
 ## Python targets

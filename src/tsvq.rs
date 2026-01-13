@@ -1,3 +1,9 @@
+//! Tree-structured vector quantization (TSVQ) implementation.
+//!
+//! TSVQ builds a hierarchical binary tree of cluster centroids, allowing
+//! efficient O(log k) quantization by traversing the tree to find the
+//! nearest leaf node.
+
 use crate::core::distance::Distance;
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
@@ -98,6 +104,28 @@ impl TSVQNode {
 }
 
 /// Tree-structured vector quantizer using hierarchical clustering.
+///
+/// TSVQ builds a binary tree where each node represents a cluster centroid.
+/// Vectors are quantized by traversing the tree to find the nearest leaf node.
+///
+/// # Example
+///
+/// ```
+/// use vq::{TSVQ, Distance, Quantizer};
+///
+/// // Training data: 50 vectors of dimension 6
+/// let training: Vec<Vec<f32>> = (0..50)
+///     .map(|i| (0..6).map(|j| ((i + j) % 30) as f32).collect())
+///     .collect();
+/// let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
+///
+/// // Create TSVQ with max depth 4
+/// let tsvq = TSVQ::new(&refs, 4, Distance::Euclidean).unwrap();
+///
+/// // Quantize a vector
+/// let quantized = tsvq.quantize(&training[0]).unwrap();
+/// assert_eq!(quantized.len(), 6);
+/// ```
 pub struct TSVQ {
     root: TSVQNode,
     dim: usize,
@@ -112,6 +140,25 @@ impl TSVQ {
     /// * `training_data` - Training vectors for building the tree
     /// * `max_depth` - Maximum depth of the tree
     /// * `distance` - Distance metric to use
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use vq::{TSVQ, Distance, Quantizer};
+    ///
+    /// let data: Vec<Vec<f32>> = (0..100)
+    ///     .map(|i| (0..8).map(|j| ((i * j) % 100) as f32).collect())
+    ///     .collect();
+    /// let refs: Vec<&[f32]> = data.iter().map(|v| v.as_slice()).collect();
+    ///
+    /// let tsvq = TSVQ::new(&refs, 5, Distance::SquaredEuclidean).unwrap();
+    /// assert_eq!(tsvq.dim(), 8);
+    ///
+    /// // Quantize and dequantize
+    /// let q = tsvq.quantize(&data[0]).unwrap();
+    /// let reconstructed = tsvq.dequantize(&q).unwrap();
+    /// assert_eq!(reconstructed.len(), 8);
+    /// ```
     ///
     /// # Errors
     ///

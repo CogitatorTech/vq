@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use vq::Vector;
 
 pub const SEED: u64 = 66;
-pub const NUM_SAMPLES: [usize; 3] = [1_000, 5_000, 10_000];
+pub const NUM_SAMPLES: [usize; 6] = [1_000, 5_000, 10_000, 50_000, 100_000, 1_000_000];
 pub const DIM: usize = 128;
 pub const M: usize = 16;
 pub const K: usize = 256;

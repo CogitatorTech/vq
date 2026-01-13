@@ -37,10 +37,10 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
 | Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type     | Output Type   |
 |-----------------------------------------------------|---------------------|-------------------------|----------------------|----------------|---------------|
-| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`       | `Vector<u8>`  |
-| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`       | `Vector<u8>`  |
-| [PQ](https://ieeexplore.ieee.org/document/5432202)  | $O(nkd)$            | $O(nd)$                 | Euclidean and Cosine | `&Vector<f32>` | `Vector<f16>` |
-| [TSVQ](https://ieeexplore.ieee.org/document/515493) | $O(n \log k)$       | $O(d \log k)$           | Euclidean            | `&Vector<f32>` | `Vector<f16>` |
+| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`       | `Vec<u8>`     |
+| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`       | `Vec<u8>`     |
+| [PQ](src/pq.rs)                                     | $O(nkd)$            | $O(nd)$                 | All                  | `&[f32]`       | `Vec<f16>`    |
+| [TSVQ](src/tsvq.rs)                                 | $O(n \log k)$       | $O(d \log k)$           | All                  | `&[f32]`       | `Vec<f16>`    |
 
 - $n$: number of vectors
 - $d$: dimensionality of vectors
@@ -58,10 +58,15 @@ Add `vq` to your `Cargo.toml`:
 cargo add vq
 ```
 
-To enable SIMD acceleration (needs a C compiler):
+To enable SIMD acceleration:
 ```bash
 cargo add vq --features simd
 ```
+
+> [!NOTE]
+> The `simd` feature requires:
+> - A C11-compatible compiler (`gcc`, `clang`, or MSVC)
+> - Git submodules initialized: `git submodule update --init --recursive`
 
 To enable parallel training:
 ```bash
@@ -90,9 +95,7 @@ Check out the latest API documentation on [docs.rs](https://docs.rs/vq).
 Here's a simple example using the SQ algorithm to quantize a vector:
 
 ```rust
-use vq::bq::BinaryQuantizer;
-use vq::sq::ScalarQuantizer;
-use vq::{Quantizer, VqResult};
+use vq::{BinaryQuantizer, ScalarQuantizer, Quantizer, VqResult};
 
 fn main() -> VqResult<()> {
     // Binary quantization
@@ -110,9 +113,7 @@ fn main() -> VqResult<()> {
 #### Product Quantizer Example
 
 ```rust
-use vq::distance::Distance;
-use vq::pq::ProductQuantizer;
-use vq::VqResult;
+use vq::{ProductQuantizer, Distance, VqResult};
 
 fn main() -> VqResult<()> {
     // Training data (each inner slice is a vector)

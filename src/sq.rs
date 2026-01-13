@@ -1,7 +1,23 @@
+//! Scalar quantization (SQ) implementation.
+//!
+//! Scalar quantization uniformly divides a value range into discrete levels,
+//! mapping each input value to its nearest quantization level.
+
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
 
 /// Scalar quantizer that uniformly quantizes values in a range to discrete levels.
+///
+/// # Example
+///
+/// ```
+/// use vq::ScalarQuantizer;
+/// use vq::Quantizer;
+///
+/// let sq = ScalarQuantizer::new(0.0, 1.0, 11).unwrap(); // 0.0, 0.1, ..., 1.0
+/// let quantized = sq.quantize(&[0.0, 0.5, 1.0]).unwrap();
+/// assert_eq!(quantized, vec![0, 5, 10]);
+/// ```
 pub struct ScalarQuantizer {
     min: f32,
     max: f32,
@@ -18,12 +34,43 @@ impl ScalarQuantizer {
     /// * `max` - Maximum value in the quantization range
     /// * `levels` - Number of quantization levels (2-256)
     ///
+    /// # Example
+    ///
+    /// ```
+    /// use vq::ScalarQuantizer;
+    /// use vq::Quantizer;
+    ///
+    /// // Create a quantizer for the range [-1, 1] with 256 levels
+    /// let sq = ScalarQuantizer::new(-1.0, 1.0, 256).unwrap();
+    ///
+    /// // Quantize and reconstruct
+    /// let input = vec![0.0, 0.5, -0.5];
+    /// let quantized = sq.quantize(&input).unwrap();
+    /// let reconstructed = sq.dequantize(&quantized).unwrap();
+    ///
+    /// // Reconstruction error is bounded
+    /// for (orig, recon) in input.iter().zip(reconstructed.iter()) {
+    ///     assert!((orig - recon).abs() < 0.01);
+    /// }
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns an error if:
+    /// - `min` or `max` is NaN or Infinity
     /// - `max <= min`
     /// - `levels < 2` or `levels > 256`
     pub fn new(min: f32, max: f32, levels: usize) -> VqResult<Self> {
+        if !min.is_finite() {
+            return Err(VqError::InvalidParameter(
+                "min must be a finite value (not NaN or Infinity)".to_string(),
+            ));
+        }
+        if !max.is_finite() {
+            return Err(VqError::InvalidParameter(
+                "max must be a finite value (not NaN or Infinity)".to_string(),
+            ));
+        }
         if max <= min {
             return Err(VqError::InvalidParameter(
                 "max must be greater than min".to_string(),
@@ -128,6 +175,27 @@ mod tests {
     #[test]
     fn test_too_few_levels() {
         let result = ScalarQuantizer::new(-1.0, 1.0, 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_nan_min_rejected() {
+        let result = ScalarQuantizer::new(f32::NAN, 1.0, 256);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_nan_max_rejected() {
+        let result = ScalarQuantizer::new(-1.0, f32::NAN, 256);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_infinity_rejected() {
+        let result = ScalarQuantizer::new(f32::NEG_INFINITY, 1.0, 256);
+        assert!(result.is_err());
+
+        let result = ScalarQuantizer::new(-1.0, f32::INFINITY, 256);
         assert!(result.is_err());
     }
 }

@@ -1,3 +1,9 @@
+//! Product quantization (PQ) implementation.
+//!
+//! Product quantization splits vectors into subspaces and quantizes each
+//! independently using learned codebooks, enabling efficient compression
+//! and approximate nearest neighbor search.
+
 use crate::core::distance::Distance;
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
@@ -5,6 +11,31 @@ use crate::core::vector::{lbg_quantize, Vector};
 use half::f16;
 
 /// Product quantizer that divides vectors into subspaces and quantizes each separately.
+///
+/// Product quantization (PQ) is a technique that splits high-dimensional vectors
+/// into smaller subspaces and quantizes each subspace independently using learned
+/// codebooks. This allows for efficient storage and fast approximate nearest
+/// neighbor search.
+///
+/// # Example
+///
+/// ```
+/// use vq::ProductQuantizer;
+/// use vq::{Quantizer, Distance};
+///
+/// // Training data: 100 vectors of dimension 8
+/// let training: Vec<Vec<f32>> = (0..100)
+///     .map(|i| (0..8).map(|j| ((i + j) % 50) as f32).collect())
+///     .collect();
+/// let training_refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
+///
+/// // Create PQ with 2 subspaces, 4 centroids each
+/// let pq = ProductQuantizer::new(&training_refs, 2, 4, 10, Distance::Euclidean, 42).unwrap();
+///
+/// // Quantize a vector
+/// let quantized = pq.quantize(&training[0]).unwrap();
+/// assert_eq!(quantized.len(), 8);
+/// ```
 pub struct ProductQuantizer {
     codebooks: Vec<Vec<Vector<f32>>>,
     sub_dim: usize,
@@ -24,6 +55,24 @@ impl ProductQuantizer {
     /// * `max_iters` - Maximum iterations for codebook training
     /// * `distance` - Distance metric to use
     /// * `seed` - Random seed for reproducibility
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use vq::{ProductQuantizer, Distance, Quantizer};
+    ///
+    /// let training: Vec<Vec<f32>> = (0..50)
+    ///     .map(|i| (0..12).map(|j| (i * j) as f32).collect())
+    ///     .collect();
+    /// let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
+    ///
+    /// // 3 subspaces (dim 12 / 3 = 4 each), 8 centroids per subspace
+    /// let pq = ProductQuantizer::new(&refs, 3, 8, 20, Distance::Euclidean, 0).unwrap();
+    ///
+    /// assert_eq!(pq.num_subspaces(), 3);
+    /// assert_eq!(pq.sub_dim(), 4);
+    /// assert_eq!(pq.dim(), 12);
+    /// ```
     ///
     /// # Errors
     ///
