@@ -9,23 +9,17 @@
 [<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/CogitatorTech/vq)
 
 Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
-It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar
-quantization (SQ), product quantization (PQ), and tree-structured vector quantization (TSVQ).
+It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar quantization (SQ),
+product quantization (PQ), and tree-structured vector quantization (TSVQ).
 
-Vector quantization is a technique used in machine learning and data compression to reduce the size of high-dimensional
-vectors by approximating them with a smaller set of representative vectors.
-It can be used for various applications such as image compression and nearest neighbor search to speed up similarity
-search in large datasets.
+Vector quantization is a technique to reduce the size of high-dimensional vectors by approximating them with a smaller set of representative vectors.
+It can be used for various applications such as image compression and nearest neighbor search to speed up similarity search in large datasets.
 
 ### Features
 
-- A simple and generic API for all quantization algorithms
-- Good performance:
-    - SIMD Acceleration: AVX/AVX2/AVX512 for Intel and AMD, NEON for ARM CPUs (via `simd` feature)
-    - Parallel Training: Multi-threaded training using Rayon (via `parallel` feature)
-    - Zero-copying: Optimized memory usage during training
-- Flexible: Supports multiple distance metrics (Euclidean, cosine, and Manhattan distances)
-- Robust: All operations return `Result` for proper error handling
+- A simple and generic API for all quantizers
+- Good performance via SIMD acceleration, multi-threading, and zero-copying
+- Support for multiple distances including Euclidean, cosine, and Manhattan distances
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -154,4 +148,4 @@ Vq is available under either of the following licenses:
 
 ### Acknowledgements
 
-* This project uses [Hsdlib](https://github.com/habedi/hsdlib) C library for SIMD acceleration.
+* This project uses [Hsdlib](https://github.com/habedi/hsdlib) library for SIMD acceleration.
