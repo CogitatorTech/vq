@@ -77,7 +77,7 @@ cargo add vq --features all
 
 #### Python Bindings
 
-Python bindings are available in the `pyvq` directory.
+Check out the [pyvq](pyvq) directory for Python bindings for Vq.
 
 ---
 
