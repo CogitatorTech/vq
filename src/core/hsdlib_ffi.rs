@@ -138,9 +138,7 @@ pub fn get_simd_backend() -> String {
         if ptr.is_null() {
             return "Unknown".to_string();
         }
-        std::ffi::CStr::from_ptr(ptr)
-            .to_string_lossy()
-            .into_owned()
+        std::ffi::CStr::from_ptr(ptr).to_string_lossy().into_owned()
     }
 }
 

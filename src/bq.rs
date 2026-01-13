@@ -117,7 +117,7 @@ mod tests {
         // low == high
         let result = BinaryQuantizer::new(0.0, 5, 5);
         assert!(result.is_err());
-        
+
         // low > high
         let result = BinaryQuantizer::new(0.0, 6, 5);
         assert!(result.is_err());

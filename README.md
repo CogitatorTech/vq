@@ -19,9 +19,19 @@ search in large datasets.
 
 ### Features
 
-- Simple and uniform API for all quantization algorithms
-- All operations return `Result` for proper error handling
-- Supports multiple distance metrics (Euclidean, Cosine, and Manhattan)
+- A simple and generic API for all quantization algorithms
+- Good performance:
+    - SIMD Acceleration: AVX/AVX2/AVX512 for Intel and AMD, NEON for ARM CPUs (via `simd` feature)
+    - Parallel Training: Multi-threaded training using Rayon (via `parallel` feature)
+    - Zero-copying: Optimized memory usage during training
+- Flexible: Supports multiple distance metrics (Euclidean, cosine, and Manhattan distances)
+- Robust: All operations return `Result` for proper error handling
+
+See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
+
+> [!IMPORTANT]
+> Vq is in early development, so bugs and breaking changes are expected.
+> Please use the [issues page](https://github.com/CogitatorTech/vq/issues) to report bugs or request features.
 
 ### Quantization Algorithms
 
@@ -36,13 +46,36 @@ search in large datasets.
 - $d$: dimensionality of vectors
 - $k$: number of centroids or clusters
 
+---
+
 ### Installation
+
+Add `vq` to your `Cargo.toml`:
 
 ```bash
 cargo add vq
 ```
 
+To enable SIMD acceleration (needs a C compiler):
+```bash
+cargo add vq --features simd
+```
+
+To enable parallel training:
+```bash
+cargo add vq --features parallel
+```
+
+To enable all features:
+```bash
+cargo add vq --features all
+```
+
 *Vq requires Rust 1.83 or later.*
+
+### Python Bindings
+
+Python bindings are available in the `pyvq` directory.
 
 ### Documentation
 
@@ -103,9 +136,19 @@ fn main() -> VqResult<()> {
 }
 ```
 
+---
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to make a contribution.
+
 ### License
 
-Vq is available under the terms of either of the following licenses:
+Vq is available under either of the following licenses:
 
-- MIT License ([LICENSE-MIT](LICENSE-MIT))
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+* MIT License ([LICENSE-MIT](LICENSE-MIT))
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+
+### Acknowledgements
+
+* This project uses [Hsdlib](https://github.com/habedi/hsdlib) C library for SIMD acceleration.

@@ -141,33 +141,48 @@ mod tests {
     #[cfg(feature = "simd")]
     fn test_simd_consistency() {
         use crate::core::hsdlib_ffi;
-        
+
         let mut rng = rand::rng();
         use rand::Rng;
-        
+
         let len = 100;
         let a: Vec<f32> = (0..len).map(|_| rng.random::<f32>()).collect();
         let b: Vec<f32> = (0..len).map(|_| rng.random::<f32>()).collect();
 
         // Check L2 Squared
-        let scalar_l2sq: f32 = a.iter().zip(b.iter()).map(|(x, y)| (x-y).powi(2)).sum();
+        let scalar_l2sq: f32 = a.iter().zip(b.iter()).map(|(x, y)| (x - y).powi(2)).sum();
         let simd_l2sq = hsdlib_ffi::sqeuclidean_f32(&a, &b).unwrap();
-        assert!((scalar_l2sq - simd_l2sq).abs() < 1e-4, "L2 Squared mismatch: scalar={}, simd={}", scalar_l2sq, simd_l2sq);
+        assert!(
+            (scalar_l2sq - simd_l2sq).abs() < 1e-4,
+            "L2 Squared mismatch: scalar={}, simd={}",
+            scalar_l2sq,
+            simd_l2sq
+        );
 
         // Check Manhattan
-        let scalar_l1: f32 = a.iter().zip(b.iter()).map(|(x, y)| (x-y).abs()).sum();
+        let scalar_l1: f32 = a.iter().zip(b.iter()).map(|(x, y)| (x - y).abs()).sum();
         let simd_l1 = hsdlib_ffi::manhattan_f32(&a, &b).unwrap();
-        assert!((scalar_l1 - simd_l1).abs() < 1e-4, "Manhattan mismatch: scalar={}, simd={}", scalar_l1, simd_l1);
-        
+        assert!(
+            (scalar_l1 - simd_l1).abs() < 1e-4,
+            "Manhattan mismatch: scalar={}, simd={}",
+            scalar_l1,
+            simd_l1
+        );
+
         // Check Cosine Similarity checking
         // Note: Distance::CosineDistance computes 1.0 - similarity
         // hsdlib returns similarity directly
         let dot: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-        let norm_a: f32 = a.iter().map(|x| x*x).sum::<f32>().sqrt();
-        let norm_b: f32 = b.iter().map(|x| x*x).sum::<f32>().sqrt();
+        let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
         let scalar_cos_sim = dot / (norm_a * norm_b);
-        
+
         let simd_cos_sim = hsdlib_ffi::cosine_f32(&a, &b).unwrap();
-        assert!((scalar_cos_sim - simd_cos_sim).abs() < 1e-4, "Cosine mismatch: scalar={}, simd={}", scalar_cos_sim, simd_cos_sim);
+        assert!(
+            (scalar_cos_sim - simd_cos_sim).abs() < 1e-4,
+            "Cosine mismatch: scalar={}, simd={}",
+            scalar_cos_sim,
+            simd_cos_sim
+        );
     }
 }
