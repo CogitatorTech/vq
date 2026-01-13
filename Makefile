@@ -15,7 +15,7 @@ MSRV            := 1.83
 
 # Pinned versions for Rust development tools
 TARPAULIN_VERSION=0.32.8
-NEXTEST_VERSION=0.9.101
+NEXTEST_VERSION=0.9.99
 AUDIT_VERSION=0.21.2
 CAREFUL_VERSION=0.4.8
 
@@ -90,10 +90,10 @@ install-deps: install-snap ## Install development dependencies
 	@echo "Installing development dependencies..."
 	@rustup component add rustfmt clippy
 	# Install each tool with a specific, pinned version
-	@cargo install cargo-tarpaulin #--locked --version ${TARPAULIN_VERSION}
-	@cargo install cargo-nextest #--locked --version ${NEXTEST_VERSION}
-	@cargo install cargo-audit #--locked --version ${AUDIT_VERSION}
-	@cargo install cargo-careful #--locked --version ${CAREFUL_VERSION}
+	@cargo install cargo-tarpaulin --locked --version ${TARPAULIN_VERSION}
+	@cargo install cargo-nextest --locked --version ${NEXTEST_VERSION}
+	@cargo install cargo-audit --locked --version ${AUDIT_VERSION}
+	@cargo install cargo-careful --locked --version ${CAREFUL_VERSION}
 	@sudo apt-get install python3-pip libfontconfig1-dev
 	@pip install $(PY_DEP_MNGR)
 
