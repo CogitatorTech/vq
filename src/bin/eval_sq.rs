@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-#[path = "utils.rs"]
-mod utils;
+#[path = "common.rs"]
+mod common;
 
 use anyhow::Result;
 use clap::Parser;
@@ -11,10 +11,10 @@ use vq::{Quantizer, ScalarQuantizer};
 #[command(name = "eval_sq")]
 #[command(about = "Evaluate Scalar Quantizer performance")]
 struct Args {
-    #[arg(long, default_value_t = utils::SEED)]
+    #[arg(long, default_value_t = common::SEED)]
     seed: u64,
 
-    #[arg(long, default_value_t = utils::DIM)]
+    #[arg(long, default_value_t = common::DIM)]
     dim: usize,
 
     #[arg(long, default_value_t = 256)]
@@ -26,10 +26,10 @@ fn main() -> Result<()> {
     println!("Scalar Quantizer Evaluation");
     println!("===========================");
 
-    for &n_samples in &utils::NUM_SAMPLES {
+    for &n_samples in &common::NUM_SAMPLES {
         println!("\nSamples: {}", n_samples);
 
-        let original_data = utils::generate_synthetic_data(n_samples, args.dim, args.seed);
+        let original_data = common::generate_synthetic_data(n_samples, args.dim, args.seed);
 
         let start = Instant::now();
         let sq = ScalarQuantizer::new(0.0, 1.0, args.levels)?;

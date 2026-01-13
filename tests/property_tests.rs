@@ -432,7 +432,7 @@ proptest! {
         b in vec_f32(10, 0.1, 100.0),
     ) {
         let result = Distance::CosineDistance.compute(&a, &b).unwrap();
-        prop_assert!(result >= -1e-6 && result <= 2.0 + 1e-6,
+        prop_assert!((-1e-6..=2.0 + 1e-6).contains(&result),
             "CosineDistance should be in [0, 2], got {}", result);
     }
 }

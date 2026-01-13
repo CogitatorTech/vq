@@ -58,10 +58,15 @@ Add `vq` to your `Cargo.toml`:
 cargo add vq
 ```
 
-To enable SIMD acceleration (needs a C compiler):
+To enable SIMD acceleration:
 ```bash
 cargo add vq --features simd
 ```
+
+> [!NOTE]
+> The `simd` feature requires:
+> - A C11-compatible compiler (`gcc`, `clang`, or MSVC)
+> - Git submodules initialized: `git submodule update --init --recursive`
 
 To enable parallel training:
 ```bash

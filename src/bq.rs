@@ -1,3 +1,8 @@
+//! Binary quantization (BQ) implementation.
+//!
+//! Binary quantization is the simplest form of quantization, mapping each value
+//! to one of two discrete levels based on a threshold comparison.
+
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
 

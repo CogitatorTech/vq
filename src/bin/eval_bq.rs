@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-#[path = "utils.rs"]
-mod utils;
+#[path = "common.rs"]
+mod common;
 
 use anyhow::Result;
 use clap::Parser;
@@ -11,10 +11,10 @@ use vq::{BinaryQuantizer, Quantizer};
 #[command(name = "eval_bq")]
 #[command(about = "Evaluate Binary Quantizer performance")]
 struct Args {
-    #[arg(long, default_value_t = utils::SEED)]
+    #[arg(long, default_value_t = common::SEED)]
     seed: u64,
 
-    #[arg(long, default_value_t = utils::DIM)]
+    #[arg(long, default_value_t = common::DIM)]
     dim: usize,
 }
 
@@ -23,10 +23,10 @@ fn main() -> Result<()> {
     println!("Binary Quantizer Evaluation");
     println!("===========================");
 
-    for &n_samples in &utils::NUM_SAMPLES {
+    for &n_samples in &common::NUM_SAMPLES {
         println!("\nSamples: {}", n_samples);
 
-        let original_data = utils::generate_synthetic_data(n_samples, args.dim, args.seed);
+        let original_data = common::generate_synthetic_data(n_samples, args.dim, args.seed);
 
         let start = Instant::now();
         let bq = BinaryQuantizer::new(0.5, 0, 1)?;

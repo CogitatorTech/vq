@@ -1,3 +1,8 @@
+//! Scalar quantization (SQ) implementation.
+//!
+//! Scalar quantization uniformly divides a value range into discrete levels,
+//! mapping each input value to its nearest quantization level.
+
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
 

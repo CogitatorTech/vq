@@ -37,16 +37,6 @@ parallel = ["rayon"]
 simd = []
 all = ["binaries", "parallel", "simd"]
 
-[[bin]]
-name = "eval"
-path = "src/bin/eval.rs"
-required-features = ["binaries"]
-
-[[bin]]
-name = "vq-examples"
-path = "src/bin/vq_examples.rs"
-required-features = ["binaries"]
-
 [dependencies]
 rand = "0.9.0"
 half = "2.4.1"
