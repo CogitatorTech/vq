@@ -1,6 +1,6 @@
 default_stages: [ pre-push ]
 fail_fast: false
-exclude: '(^pyvq/|^tests/)'
+exclude: '(^external/|^pyvq/|^tests/)'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

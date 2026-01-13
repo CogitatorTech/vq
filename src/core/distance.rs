@@ -9,6 +9,7 @@ pub enum Distance {
 }
 
 impl Distance {
+    #[inline]
     pub fn compute(&self, a: &[f32], b: &[f32]) -> VqResult<f32> {
         if a.len() != b.len() {
             return Err(VqError::DimensionMismatch {
@@ -28,6 +29,7 @@ impl Distance {
     }
 }
 
+#[inline]
 fn compute_squared_euclidean(a: &[f32], b: &[f32]) -> f32 {
     a.iter()
         .zip(b.iter())
@@ -38,10 +40,12 @@ fn compute_squared_euclidean(a: &[f32], b: &[f32]) -> f32 {
         .sum()
 }
 
+#[inline]
 fn compute_manhattan(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b.iter()).map(|(&x, &y)| (x - y).abs()).sum()
 }
 
+#[inline]
 fn compute_cosine(a: &[f32], b: &[f32]) -> f32 {
     let dot: f32 = a.iter().zip(b.iter()).map(|(&x, &y)| x * y).sum();
     let norm_a = a.iter().map(|&x| x * x).sum::<f32>().sqrt();

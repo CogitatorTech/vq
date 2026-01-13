@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_dimension_not_divisible() {
-        let data = vec![vec![1.0, 2.0, 3.0]];
+        let data = [vec![1.0, 2.0, 3.0]];
         let data_refs: Vec<&[f32]> = data.iter().map(|v| v.as_slice()).collect();
         let result = ProductQuantizer::new(&data_refs, 2, 2, 10, Distance::Euclidean, 42);
         assert!(result.is_err());

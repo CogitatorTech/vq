@@ -83,6 +83,7 @@ impl<T: Real> Vector<T> {
         &self.data
     }
 
+    #[inline]
     pub fn dot(&self, other: &Self) -> T {
         self.data
             .iter()
@@ -90,10 +91,12 @@ impl<T: Real> Vector<T> {
             .fold(T::zero(), |acc, (&a, &b)| acc + a * b)
     }
 
+    #[inline]
     pub fn norm(&self) -> T {
         self.dot(self).sqrt()
     }
 
+    #[inline]
     pub fn distance2(&self, other: &Self) -> T {
         self.data
             .iter()
@@ -194,6 +197,46 @@ pub fn mean_vector<T: Real>(vectors: &[Vector<T>]) -> VqResult<Vector<T>> {
     Ok(Vector::new(data))
 }
 
+/// Finds the index of the nearest centroid to a vector.
+#[inline]
+fn find_nearest_centroid(v: &Vector<f32>, centroids: &[Vector<f32>]) -> usize {
+    let mut best_idx = 0;
+    let mut best_dist = v.distance2(&centroids[0]);
+    for (j, c) in centroids.iter().enumerate().skip(1) {
+        let dist = v.distance2(c);
+        if dist < best_dist {
+            best_dist = dist;
+            best_idx = j;
+        }
+    }
+    best_idx
+}
+
+/// Computes the mean vector from a slice of data using only the specified indices.
+/// This avoids cloning vectors into temporary storage.
+#[inline]
+fn mean_vector_by_indices(data: &[Vector<f32>], indices: &[usize]) -> VqResult<Vector<f32>> {
+    if indices.is_empty() {
+        return Err(VqError::EmptyInput);
+    }
+    let dim = data[indices[0]].len();
+    let n = indices.len() as f32;
+    let mut sum = vec![0.0f32; dim];
+
+    for &idx in indices {
+        for (i, &val) in data[idx].data.iter().enumerate() {
+            sum[i] += val;
+        }
+    }
+
+    let result = sum.into_iter().map(|s| s / n).collect();
+    Ok(Vector::new(result))
+}
+
+/// LBG/k-means quantization algorithm.
+///
+/// When compiled with the `parallel` feature, the assignment step is parallelized
+/// using Rayon for improved performance on large datasets.
 pub fn lbg_quantize(
     data: &[Vector<f32>],
     k: usize,
@@ -218,25 +261,32 @@ pub fn lbg_quantize(
     let mut centroids: Vec<Vector<f32>> = data.choose_multiple(&mut rng, k).cloned().collect();
 
     for _ in 0..max_iters {
-        let mut clusters: Vec<Vec<Vector<f32>>> = vec![Vec::new(); k];
-        let mut changed = false;
+        // Compute assignments (parallel when feature enabled)
+        #[cfg(feature = "parallel")]
+        let assignments: Vec<usize> = {
+            use rayon::prelude::*;
+            data.par_iter()
+                .map(|v| find_nearest_centroid(v, &centroids))
+                .collect()
+        };
 
-        for v in data {
-            let mut best_idx = 0;
-            let mut best_dist = v.distance2(&centroids[0]);
-            for (j, c) in centroids.iter().enumerate().skip(1) {
-                let dist = v.distance2(c);
-                if dist < best_dist {
-                    best_dist = dist;
-                    best_idx = j;
-                }
-            }
-            clusters[best_idx].push(v.clone());
+        #[cfg(not(feature = "parallel"))]
+        let assignments: Vec<usize> = data
+            .iter()
+            .map(|v| find_nearest_centroid(v, &centroids))
+            .collect();
+
+        // Build cluster indices (no cloning - just track which data points belong to each cluster)
+        let mut cluster_indices: Vec<Vec<usize>> = vec![Vec::new(); k];
+        for (i, &cluster_idx) in assignments.iter().enumerate() {
+            cluster_indices[cluster_idx].push(i);
         }
 
+        // Update centroids
+        let mut changed = false;
         for j in 0..k {
-            if !clusters[j].is_empty() {
-                let new_centroid = mean_vector(&clusters[j])?;
+            if !cluster_indices[j].is_empty() {
+                let new_centroid = mean_vector_by_indices(data, &cluster_indices[j])?;
                 if new_centroid != centroids[j] {
                     changed = true;
                 }
