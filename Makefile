@@ -15,7 +15,7 @@ MSRV            := 1.83
 
 # Pinned versions for Rust development tools
 TARPAULIN_VERSION=0.32.8
-NEXTEST_VERSION=0.9.99
+NEXTEST_VERSION=0.9.95
 AUDIT_VERSION=0.21.2
 CAREFUL_VERSION=0.4.8
 
