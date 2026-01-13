@@ -2,7 +2,6 @@
 
 [<img alt="tests" src="https://img.shields.io/github/actions/workflow/status/CogitatorTech/vq/tests.yml?label=tests&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/CogitatorTech/vq/actions/workflows/tests.yml)
 [<img alt="code coverage" src="https://img.shields.io/codecov/c/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codecov" height="20">](https://codecov.io/gh/CogitatorTech/vq)
-[<img alt="codefactor" src="https://img.shields.io/codefactor/grade/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codefactor" height="20">](https://www.codefactor.io/repository/github/CogitatorTech/vq)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/vq.svg?label=crates.io&style=flat&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-vq-66c2a5?label=docs.rs&style=flat&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/vq)
 [<img alt="msrv" src="https://img.shields.io/badge/msrv-1.83.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.83.0)
@@ -20,6 +19,7 @@ It can be used for various applications such as image compression and nearest ne
 - A simple and generic API for all quantizers
 - Good performance via SIMD acceleration, multi-threading, and zero-copying
 - Support for multiple distances including Euclidean, cosine, and Manhattan distances
+- Python bindings via [PyVq](https://pypi.org/project/pyvq/) package.
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -58,9 +58,7 @@ cargo add vq --features simd
 ```
 
 > [!NOTE]
-> The `simd` feature requires:
-> - A C11-compatible compiler (`gcc`, `clang`, or MSVC)
-> - Git submodules initialized: `git submodule update --init --recursive`
+> The `simd` feature needs a C11-compatible compiler (like GCC, Clang, or MSVC)
 
 To enable parallel training:
 ```bash
@@ -74,9 +72,12 @@ cargo add vq --features all
 
 *Vq requires Rust 1.83 or later.*
 
-#### Python Bindings
+---
 
-Check out the [pyvq](pyvq) directory for Python bindings for Vq.
+### Python Bindings
+
+Vq can be used from Python via PyVq Python package.
+Check out the [pyvq](pyvq) directory for PyVq source code.
 
 ---
 
