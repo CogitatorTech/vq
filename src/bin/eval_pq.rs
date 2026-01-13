@@ -6,10 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use half::f16;
 use std::time::Instant;
-use vq::distance::Distance;
-use vq::pq::ProductQuantizer;
-use vq::vector::Vector;
-use vq::Quantizer;
+use vq::{Distance, ProductQuantizer, Quantizer, Vector};
 
 #[derive(Parser)]
 #[command(name = "eval_pq")]

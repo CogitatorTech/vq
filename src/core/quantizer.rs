@@ -1,6 +1,6 @@
 //! Common traits for vector quantization algorithms.
 
-use crate::exceptions::VqResult;
+use crate::core::error::VqResult;
 
 /// A trait representing a vector quantizer.
 ///

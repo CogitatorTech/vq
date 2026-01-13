@@ -1,5 +1,5 @@
-use crate::exceptions::{VqError, VqResult};
-use crate::traits::Quantizer;
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
 
 /// Binary quantizer that maps values above/below a threshold to two discrete levels.
 pub struct BinaryQuantizer {

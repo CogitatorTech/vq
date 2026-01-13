@@ -5,8 +5,7 @@ mod utils;
 use anyhow::Result;
 use clap::Parser;
 use std::time::Instant;
-use vq::bq::BinaryQuantizer;
-use vq::Quantizer;
+use vq::{BinaryQuantizer, Quantizer};
 
 #[derive(Parser)]
 #[command(name = "eval_bq")]

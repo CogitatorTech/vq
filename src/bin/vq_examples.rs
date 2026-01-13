@@ -1,9 +1,4 @@
-use vq::bq::BinaryQuantizer;
-use vq::distance::Distance;
-use vq::pq::ProductQuantizer;
-use vq::sq::ScalarQuantizer;
-use vq::tsvq::TSVQ;
-use vq::{Quantizer, VqResult};
+use vq::{BinaryQuantizer, Distance, ProductQuantizer, Quantizer, ScalarQuantizer, VqResult, TSVQ};
 
 fn main() -> VqResult<()> {
     println!("=== Vq Examples ===\n");

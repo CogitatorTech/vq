@@ -1,9 +1,4 @@
-use vq::bq::BinaryQuantizer;
-use vq::distance::Distance;
-use vq::pq::ProductQuantizer;
-use vq::sq::ScalarQuantizer;
-use vq::tsvq::TSVQ;
-use vq::Quantizer;
+use vq::{BinaryQuantizer, Distance, ProductQuantizer, Quantizer, ScalarQuantizer, TSVQ};
 
 #[test]
 fn test_all_quantizers_on_same_data() {

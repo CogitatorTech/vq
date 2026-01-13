@@ -4,7 +4,7 @@ use anyhow::Result;
 use rand::prelude::*;
 use rand_distr::{Distribution, Uniform};
 use std::collections::HashSet;
-use vq::vector::Vector;
+use vq::Vector;
 
 pub const SEED: u64 = 66;
 pub const NUM_SAMPLES: [usize; 3] = [1_000, 5_000, 10_000];

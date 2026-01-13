@@ -1,4 +1,4 @@
-use crate::exceptions::{VqError, VqResult};
+use crate::core::error::{VqError, VqResult};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Distance {

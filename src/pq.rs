@@ -1,7 +1,7 @@
-use crate::distance::Distance;
-use crate::exceptions::{VqError, VqResult};
-use crate::traits::Quantizer;
-use crate::vector::{lbg_quantize, Vector};
+use crate::core::distance::Distance;
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
+use crate::core::vector::{lbg_quantize, Vector};
 use half::f16;
 
 /// Product quantizer that divides vectors into subspaces and quantizes each separately.

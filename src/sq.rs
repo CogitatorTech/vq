@@ -1,5 +1,5 @@
-use crate::exceptions::{VqError, VqResult};
-use crate::traits::Quantizer;
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
 
 /// Scalar quantizer that uniformly quantizes values in a range to discrete levels.
 pub struct ScalarQuantizer {

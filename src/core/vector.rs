@@ -3,7 +3,7 @@ use rand::prelude::{IndexedRandom, SeedableRng, StdRng};
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 
-use crate::exceptions::{VqError, VqResult};
+use crate::core::error::{VqError, VqResult};
 
 pub trait Real:
     Copy

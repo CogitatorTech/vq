@@ -5,8 +5,7 @@ mod utils;
 use anyhow::Result;
 use clap::Parser;
 use std::time::Instant;
-use vq::sq::ScalarQuantizer;
-use vq::Quantizer;
+use vq::{Quantizer, ScalarQuantizer};
 
 #[derive(Parser)]
 #[command(name = "eval_sq")]
