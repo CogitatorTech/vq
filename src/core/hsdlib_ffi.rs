@@ -138,6 +138,61 @@ pub fn get_simd_backend() -> String {
         if ptr.is_null() {
             return "Unknown".to_string();
         }
-        std::ffi::CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        std::ffi::CStr::from_ptr(ptr)
+            .to_string_lossy()
+            .into_owned()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_backend_detection() {
+        let backend = get_simd_backend();
+        assert!(!backend.is_empty());
+        assert!(!backend.contains("Unknown"));
+    }
+
+    #[test]
+    fn test_sqeuclidean_f32_valid() {
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![4.0, 5.0, 6.0];
+        // Dist: (1-4)^2 + (2-5)^2 + (3-6)^2 = 9 + 9 + 9 = 27
+        let result = sqeuclidean_f32(&a, &b).expect("SIMD sqeuclidean failed");
+        assert!((result - 27.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_sqeuclidean_f32_mismatch() {
+        let a = vec![1.0, 2.0];
+        let b = vec![1.0];
+        let result = sqeuclidean_f32(&a, &b);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_manhattan_f32_valid() {
+        let a = vec![1.0, 2.0];
+        let b = vec![3.0, 1.0];
+        // Manhattan: |1-3| + |2-1| = 2 + 1 = 3
+        let result = manhattan_f32(&a, &b).expect("SIMD manhattan failed");
+        assert!((result - 3.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_cosine_f32_valid() {
+        let a = vec![1.0, 0.0];
+        let b = vec![0.0, 1.0];
+        // Cosine similarity of orthogonal vectors is 0
+        let result = cosine_f32(&a, &b).expect("SIMD cosine failed");
+        assert!(result.abs() < 1e-5);
+
+        let a = vec![1.0, 0.0];
+        let b = vec![1.0, 0.0];
+        // Cosine similarity of identical vectors is 1
+        let result = cosine_f32(&a, &b).expect("SIMD cosine failed");
+        assert!((result - 1.0).abs() < 1e-5);
     }
 }

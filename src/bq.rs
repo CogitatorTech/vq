@@ -103,4 +103,36 @@ mod tests {
         let result = BinaryQuantizer::new(0.0, 1, 0);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_getters() {
+        let bq = BinaryQuantizer::new(0.5, 10, 20).unwrap();
+        assert_eq!(bq.threshold(), 0.5);
+        assert_eq!(bq.low(), 10);
+        assert_eq!(bq.high(), 20);
+    }
+
+    #[test]
+    fn test_invalid_parameters() {
+        // low == high
+        let result = BinaryQuantizer::new(0.0, 5, 5);
+        assert!(result.is_err());
+        
+        // low > high
+        let result = BinaryQuantizer::new(0.0, 6, 5);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_empty_input() {
+        let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+        let input: Vec<f32> = vec![];
+        let result = bq.quantize(&input).unwrap();
+        assert!(result.is_empty());
+
+        // Dequantize empty
+        let empty_codes: Vec<u8> = vec![];
+        let reconstructed = bq.dequantize(&empty_codes).unwrap();
+        assert!(reconstructed.is_empty());
+    }
 }

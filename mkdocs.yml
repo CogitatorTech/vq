@@ -1,5 +1,5 @@
 site_name: Vq Documentation
-site_description: A Graph Analytics Toolbox for DuckDB
+site_description: A Vector Quantization Library for Rust
 repo_url: https://github.com/CogitatorTech/vq
 repo_name: CogitatorTech/vq
 site_url: https://cogitatortech.github.io/vq/
