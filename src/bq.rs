@@ -2,6 +2,17 @@ use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
 
 /// Binary quantizer that maps values above/below a threshold to two discrete levels.
+///
+/// # Example
+///
+/// ```
+/// use vq::BinaryQuantizer;
+/// use vq::Quantizer;
+///
+/// let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+/// let quantized = bq.quantize(&[-1.0, 0.5, 1.0]).unwrap();
+/// assert_eq!(quantized, vec![0, 1, 1]);
+/// ```
 pub struct BinaryQuantizer {
     threshold: f32,
     low: u8,
@@ -17,10 +28,31 @@ impl BinaryQuantizer {
     /// * `low` - The output value for inputs below the threshold
     /// * `high` - The output value for inputs at or above the threshold
     ///
+    /// # Example
+    ///
+    /// ```
+    /// use vq::BinaryQuantizer;
+    /// use vq::Quantizer;
+    ///
+    /// // Create a binary quantizer with threshold 0.5
+    /// let bq = BinaryQuantizer::new(0.5, 0, 1).unwrap();
+    ///
+    /// // Values >= 0.5 map to 1, values < 0.5 map to 0
+    /// let result = bq.quantize(&[0.3, 0.5, 0.7]).unwrap();
+    /// assert_eq!(result, vec![0, 1, 1]);
+    /// ```
+    ///
     /// # Errors
     ///
-    /// Returns an error if `low >= high`.
+    /// Returns an error if:
+    /// - `low >= high`
+    /// - `threshold` is NaN
     pub fn new(threshold: f32, low: u8, high: u8) -> VqResult<Self> {
+        if threshold.is_nan() {
+            return Err(VqError::InvalidParameter(
+                "Threshold cannot be NaN".to_string(),
+            ));
+        }
         if low >= high {
             return Err(VqError::InvalidParameter(
                 "Low quantization level must be less than high quantization level".to_string(),
@@ -134,5 +166,11 @@ mod tests {
         let empty_codes: Vec<u8> = vec![];
         let reconstructed = bq.dequantize(&empty_codes).unwrap();
         assert!(reconstructed.is_empty());
+    }
+
+    #[test]
+    fn test_nan_threshold_rejected() {
+        let result = BinaryQuantizer::new(f32::NAN, 0, 1);
+        assert!(result.is_err());
     }
 }

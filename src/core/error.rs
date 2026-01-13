@@ -18,6 +18,10 @@ pub enum VqError {
     /// A metric specific parameter is invalid.
     #[error("Invalid metric parameter for {metric}: {details}")]
     InvalidMetricParameter { metric: String, details: String },
+
+    /// Input contains invalid values (like NaN or Infinity where it was not allowed).
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
 }
 
 /// A specialized Result type for Vq operations.

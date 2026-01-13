@@ -396,7 +396,9 @@ fn test_sq_large_vector() {
 #[test]
 fn test_bq_large_vector() {
     let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
-    let large_input: Vec<f32> = (0..10000).map(|i| if i % 2 == 0 { 1.0 } else { -1.0 }).collect();
+    let large_input: Vec<f32> = (0..10000)
+        .map(|i| if i % 2 == 0 { 1.0 } else { -1.0 })
+        .collect();
 
     let quantized = bq.quantize(&large_input).unwrap();
     assert_eq!(quantized.len(), 10000);
@@ -464,5 +466,261 @@ mod simd_tests {
                 assert!(val.is_finite());
             }
         }
+    }
+}
+
+// =============================================================================
+// Special Float Value Edge Case Tests
+// =============================================================================
+
+#[test]
+fn test_bq_with_nan_input() {
+    let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+
+    // NaN comparisons always return false, so NaN >= threshold is false
+    let input = vec![f32::NAN, 1.0, -1.0, f32::NAN];
+    let result = bq.quantize(&input).unwrap();
+
+    // NaN >= 0.0 is false, so it maps to low (0)
+    assert_eq!(result[0], 0); // NaN
+    assert_eq!(result[1], 1); // 1.0 >= 0.0
+    assert_eq!(result[2], 0); // -1.0 < 0.0
+    assert_eq!(result[3], 0); // NaN
+}
+
+#[test]
+fn test_bq_with_infinity_input() {
+    let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+
+    let input = vec![f32::INFINITY, f32::NEG_INFINITY, 0.0];
+    let result = bq.quantize(&input).unwrap();
+
+    assert_eq!(result[0], 1); // +Inf >= 0.0
+    assert_eq!(result[1], 0); // -Inf < 0.0
+    assert_eq!(result[2], 1); // 0.0 >= 0.0
+}
+
+#[test]
+fn test_sq_with_nan_input() {
+    let sq = ScalarQuantizer::new(-1.0, 1.0, 256).unwrap();
+
+    // NaN.clamp() returns NaN, and NaN comparisons produce undefined behavior
+    // The current implementation will produce some output (likely 0 due to rounding)
+    let input = vec![f32::NAN];
+    let result = sq.quantize(&input).unwrap();
+    assert_eq!(result.len(), 1);
+    // Note: The exact value is implementation-defined for NaN
+}
+
+#[test]
+fn test_sq_with_infinity_input() {
+    let sq = ScalarQuantizer::new(-1.0, 1.0, 256).unwrap();
+
+    let input = vec![f32::INFINITY, f32::NEG_INFINITY];
+    let result = sq.quantize(&input).unwrap();
+
+    // +Inf clamped to max (1.0) -> highest level (255)
+    assert_eq!(result[0], 255);
+    // -Inf clamped to min (-1.0) -> lowest level (0)
+    assert_eq!(result[1], 0);
+}
+
+#[test]
+fn test_sq_with_subnormal_floats() {
+    let sq = ScalarQuantizer::new(-1.0, 1.0, 256).unwrap();
+
+    // Subnormal (denormalized) floats are very small numbers close to zero
+    let subnormal = f32::MIN_POSITIVE / 2.0; // This is subnormal
+    let input = vec![subnormal, -subnormal, f32::MIN_POSITIVE, -f32::MIN_POSITIVE];
+    let result = sq.quantize(&input).unwrap();
+
+    assert_eq!(result.len(), 4);
+    // All these values are very close to 0, so they should map to the middle level
+    // Middle of [-1, 1] with 256 levels is around level 127-128
+    for &val in &result {
+        assert!(
+            val >= 126 && val <= 129,
+            "Subnormal should map near middle, got {}",
+            val
+        );
+    }
+}
+
+#[test]
+fn test_sq_with_extreme_values() {
+    let sq = ScalarQuantizer::new(-1e10, 1e10, 256).unwrap();
+
+    let input = vec![f32::MAX, f32::MIN_POSITIVE, -f32::MAX, 0.0];
+    let result = sq.quantize(&input).unwrap();
+
+    assert_eq!(result.len(), 4);
+    // f32::MAX is clamped to 1e10 -> level 255
+    assert_eq!(result[0], 255);
+    // f32::MIN_POSITIVE is close to 0 -> middle level
+    assert!(result[1] >= 126 && result[1] <= 129);
+    // -f32::MAX is clamped to -1e10 -> level 0
+    assert_eq!(result[2], 0);
+    // 0.0 -> middle level
+    assert!(result[3] >= 126 && result[3] <= 129);
+}
+
+#[test]
+fn test_bq_dequantize_with_arbitrary_values() {
+    let bq = BinaryQuantizer::new(0.0, 10, 20).unwrap();
+
+    // Dequantize with values that don't match low/high
+    let arbitrary = vec![0, 5, 10, 15, 20, 25, 255];
+    let result = bq.dequantize(&arbitrary).unwrap();
+
+    // Values >= high (20) map to 1.0, others to 0.0
+    assert_eq!(result[0], 0.0); // 0 < 20
+    assert_eq!(result[1], 0.0); // 5 < 20
+    assert_eq!(result[2], 0.0); // 10 < 20
+    assert_eq!(result[3], 0.0); // 15 < 20
+    assert_eq!(result[4], 1.0); // 20 >= 20
+    assert_eq!(result[5], 1.0); // 25 >= 20
+    assert_eq!(result[6], 1.0); // 255 >= 20
+}
+
+#[test]
+fn test_sq_dequantize_out_of_range_indices() {
+    let sq = ScalarQuantizer::new(0.0, 10.0, 11).unwrap(); // step = 1.0
+
+    // Dequantize with index larger than levels-1
+    let out_of_range = vec![0, 5, 10, 100, 255];
+    let result = sq.dequantize(&out_of_range).unwrap();
+
+    // Index 0 -> 0.0
+    assert!((result[0] - 0.0).abs() < 1e-6);
+    // Index 5 -> 5.0
+    assert!((result[1] - 5.0).abs() < 1e-6);
+    // Index 10 -> 10.0
+    assert!((result[2] - 10.0).abs() < 1e-6);
+    // Index 100 -> 100.0 (extrapolates beyond max, no clamping in dequantize)
+    assert!((result[3] - 100.0).abs() < 1e-6);
+    // Index 255 -> 255.0
+    assert!((result[4] - 255.0).abs() < 1e-6);
+}
+
+#[test]
+fn test_distance_with_nan() {
+    let a = vec![1.0, f32::NAN, 3.0];
+    let b = vec![1.0, 2.0, 3.0];
+
+    // NaN in distance computation should propagate
+    let result = Distance::Euclidean.compute(&a, &b).unwrap();
+    assert!(result.is_nan(), "Distance with NaN input should return NaN");
+
+    let result = Distance::Manhattan.compute(&a, &b).unwrap();
+    assert!(result.is_nan());
+
+    let result = Distance::SquaredEuclidean.compute(&a, &b).unwrap();
+    assert!(result.is_nan());
+}
+
+#[test]
+fn test_distance_with_infinity() {
+    let a = vec![f32::INFINITY, 0.0];
+    let b = vec![0.0, 0.0];
+
+    let result = Distance::Euclidean.compute(&a, &b).unwrap();
+    assert!(result.is_infinite() && result > 0.0);
+
+    let result = Distance::Manhattan.compute(&a, &b).unwrap();
+    assert!(result.is_infinite() && result > 0.0);
+}
+
+#[test]
+fn test_distance_with_opposite_infinities() {
+    let a = vec![f32::INFINITY];
+    let b = vec![f32::NEG_INFINITY];
+
+    let result = Distance::Euclidean.compute(&a, &b).unwrap();
+    assert!(result.is_infinite());
+
+    let result = Distance::Manhattan.compute(&a, &b).unwrap();
+    assert!(result.is_infinite());
+}
+
+#[test]
+fn test_cosine_distance_with_zero_vector() {
+    let zero = vec![0.0, 0.0, 0.0];
+    let nonzero = vec![1.0, 2.0, 3.0];
+
+    // Cosine with zero vector should return 1.0 (maximum distance)
+    let result = Distance::CosineDistance.compute(&zero, &nonzero).unwrap();
+    assert!(
+        (result - 1.0).abs() < 1e-6,
+        "Cosine with zero vector should be 1.0, got {}",
+        result
+    );
+
+    let result = Distance::CosineDistance.compute(&zero, &zero).unwrap();
+    assert!((result - 1.0).abs() < 1e-6);
+}
+
+#[test]
+fn test_cosine_distance_with_near_zero_vector() {
+    // Very small values that are not exactly zero
+    let small = vec![1e-38, 1e-38, 1e-38];
+    let normal = vec![1.0, 1.0, 1.0];
+
+    let result = Distance::CosineDistance.compute(&small, &normal).unwrap();
+    // Should be close to 0 since vectors point in same direction
+    assert!(result.is_finite());
+    assert!(result >= 0.0 && result <= 2.0);
+}
+
+#[test]
+fn test_sq_boundary_precision() {
+    // Test exact boundary values don't cause off-by-one errors
+    let sq = ScalarQuantizer::new(0.0, 1.0, 11).unwrap(); // 0.0, 0.1, 0.2, ..., 1.0
+
+    let boundaries = vec![0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+    let result = sq.quantize(&boundaries).unwrap();
+
+    for (i, &level) in result.iter().enumerate() {
+        assert_eq!(
+            level as usize, i,
+            "Boundary {} should map to level {}",
+            boundaries[i], i
+        );
+    }
+}
+
+#[test]
+fn test_bq_negative_zero() {
+    let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+
+    // Both +0.0 and -0.0 should be >= 0.0
+    let input = vec![0.0, -0.0];
+    let result = bq.quantize(&input).unwrap();
+
+    assert_eq!(result[0], 1); // 0.0 >= 0.0
+    assert_eq!(result[1], 1); // -0.0 >= 0.0 (IEEE 754: -0.0 == 0.0)
+}
+
+#[test]
+fn test_mixed_special_values() {
+    let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+
+    let input = vec![
+        f32::NAN,
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+        f32::MAX,
+        f32::MIN,
+        f32::MIN_POSITIVE,
+        -f32::MIN_POSITIVE,
+        0.0,
+        -0.0,
+        f32::MIN_POSITIVE / 2.0, // subnormal
+    ];
+    let result = bq.quantize(&input).unwrap();
+    assert_eq!(result.len(), input.len());
+
+    // All values produce valid binary output
+    for &val in &result {
+        assert!(val == 0 || val == 1);
     }
 }
