@@ -9,6 +9,7 @@ use std::time::Instant;
 use vq::distance::Distance;
 use vq::pq::ProductQuantizer;
 use vq::vector::Vector;
+use vq::Quantizer;
 
 #[derive(Parser)]
 #[command(name = "eval_pq")]

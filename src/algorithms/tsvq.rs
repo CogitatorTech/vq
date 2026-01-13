@@ -1,5 +1,6 @@
 use crate::distance::Distance;
 use crate::exceptions::{VqError, VqResult};
+use crate::traits::Quantizer;
 use crate::vector::{mean_vector, Vector};
 use half::f16;
 
@@ -96,30 +97,57 @@ impl TSVQNode {
     }
 }
 
+/// Tree-structured vector quantizer using hierarchical clustering.
 pub struct TSVQ {
     root: TSVQNode,
+    dim: usize,
     distance: Distance,
 }
 
 impl TSVQ {
+    /// Creates a new tree-structured vector quantizer.
+    ///
+    /// # Arguments
+    ///
+    /// * `training_data` - Training vectors for building the tree
+    /// * `max_depth` - Maximum depth of the tree
+    /// * `distance` - Distance metric to use
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if training data is empty.
     pub fn new(training_data: &[&[f32]], max_depth: usize, distance: Distance) -> VqResult<Self> {
         if training_data.is_empty() {
             return Err(VqError::EmptyInput);
         }
 
+        let dim = training_data[0].len();
         let vectors: Vec<Vector<f32>> = training_data
             .iter()
             .map(|&slice| Vector::new(slice.to_vec()))
             .collect();
 
         let root = TSVQNode::build(&vectors, max_depth)?;
-        Ok(TSVQ { root, distance })
+        Ok(TSVQ {
+            root,
+            dim,
+            distance,
+        })
     }
 
-    pub fn quantize(&self, vector: &[f32]) -> VqResult<Vec<f16>> {
-        if vector.len() != self.root.centroid.len() {
+    /// Returns the expected input vector dimension.
+    pub fn dim(&self) -> usize {
+        self.dim
+    }
+}
+
+impl Quantizer for TSVQ {
+    type QuantizedOutput = Vec<f16>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        if vector.len() != self.dim {
             return Err(VqError::DimensionMismatch {
-                expected: self.root.centroid.len(),
+                expected: self.dim,
                 found: vector.len(),
             });
         }
@@ -132,6 +160,16 @@ impl TSVQ {
             .map(|&x| f16::from_f32(x))
             .collect();
         Ok(result)
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        if quantized.len() != self.dim {
+            return Err(VqError::DimensionMismatch {
+                expected: self.dim,
+                found: quantized.len(),
+            });
+        }
+        Ok(quantized.iter().map(|&x| f16::to_f32(x)).collect())
     }
 }
 

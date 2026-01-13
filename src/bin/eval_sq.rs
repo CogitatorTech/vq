@@ -6,6 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::time::Instant;
 use vq::sq::ScalarQuantizer;
+use vq::Quantizer;
 
 #[derive(Parser)]
 #[command(name = "eval_sq")]
@@ -38,7 +39,7 @@ fn main() -> Result<()> {
         let start = Instant::now();
         let _quantized: Vec<Vec<u8>> = original_data
             .iter()
-            .map(|vec| sq.quantize(&vec.data))
+            .filter_map(|vec| sq.quantize(&vec.data).ok())
             .collect();
         let quantization_time = start.elapsed().as_millis() as f64;
 

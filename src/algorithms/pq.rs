@@ -1,16 +1,36 @@
 use crate::distance::Distance;
 use crate::exceptions::{VqError, VqResult};
+use crate::traits::Quantizer;
 use crate::vector::{lbg_quantize, Vector};
 use half::f16;
 
+/// Product quantizer that divides vectors into subspaces and quantizes each separately.
 pub struct ProductQuantizer {
     codebooks: Vec<Vec<Vector<f32>>>,
     sub_dim: usize,
     m: usize,
+    dim: usize,
     distance: Distance,
 }
 
 impl ProductQuantizer {
+    /// Creates a new product quantizer.
+    ///
+    /// # Arguments
+    ///
+    /// * `training_data` - Training vectors for learning codebooks
+    /// * `m` - Number of subspaces to divide vectors into
+    /// * `k` - Number of centroids per subspace
+    /// * `max_iters` - Maximum iterations for codebook training
+    /// * `distance` - Distance metric to use
+    /// * `seed` - Random seed for reproducibility
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - Training data is empty
+    /// - Data dimension is less than `m`
+    /// - Data dimension is not divisible by `m`
     pub fn new(
         training_data: &[&[f32]],
         m: usize,
@@ -22,18 +42,18 @@ impl ProductQuantizer {
         if training_data.is_empty() {
             return Err(VqError::EmptyInput);
         }
-        let n = training_data[0].len();
-        if n < m {
+        let dim = training_data[0].len();
+        if dim < m {
             return Err(VqError::InvalidParameter(
                 "Data dimension must be at least m".to_string(),
             ));
         }
-        if n % m != 0 {
+        if dim % m != 0 {
             return Err(VqError::InvalidParameter(
                 "Data dimension must be divisible by m".to_string(),
             ));
         }
-        let sub_dim = n / m;
+        let sub_dim = dim / m;
 
         let mut codebooks = Vec::with_capacity(m);
         for i in 0..m {
@@ -53,15 +73,35 @@ impl ProductQuantizer {
             codebooks,
             sub_dim,
             m,
+            dim,
             distance,
         })
     }
 
-    pub fn quantize(&self, vector: &[f32]) -> VqResult<Vec<f16>> {
+    /// Returns the number of subspaces.
+    pub fn num_subspaces(&self) -> usize {
+        self.m
+    }
+
+    /// Returns the dimension of each subspace.
+    pub fn sub_dim(&self) -> usize {
+        self.sub_dim
+    }
+
+    /// Returns the expected input vector dimension.
+    pub fn dim(&self) -> usize {
+        self.dim
+    }
+}
+
+impl Quantizer for ProductQuantizer {
+    type QuantizedOutput = Vec<f16>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
         let n = vector.len();
-        if n != self.sub_dim * self.m {
+        if n != self.dim {
             return Err(VqError::DimensionMismatch {
-                expected: self.sub_dim * self.m,
+                expected: self.dim,
                 found: n,
             });
         }
@@ -89,6 +129,16 @@ impl ProductQuantizer {
         }
 
         Ok(result)
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        if quantized.len() != self.dim {
+            return Err(VqError::DimensionMismatch {
+                expected: self.dim,
+                found: quantized.len(),
+            });
+        }
+        Ok(quantized.iter().map(|&x| f16::to_f32(x)).collect())
     }
 }
 

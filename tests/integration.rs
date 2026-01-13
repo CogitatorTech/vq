@@ -3,6 +3,7 @@ use vq::distance::Distance;
 use vq::pq::ProductQuantizer;
 use vq::sq::ScalarQuantizer;
 use vq::tsvq::TSVQ;
+use vq::Quantizer;
 
 #[test]
 fn test_all_quantizers_on_same_data() {
@@ -14,12 +15,12 @@ fn test_all_quantizers_on_same_data() {
 
     // BQ
     let bq = BinaryQuantizer::new(50.0, 0, 1).unwrap();
-    let bq_result = bq.quantize(test_vector);
+    let bq_result = bq.quantize(test_vector).unwrap();
     assert_eq!(bq_result.len(), 10);
 
     // SQ
     let sq = ScalarQuantizer::new(0.0, 100.0, 256).unwrap();
-    let sq_result = sq.quantize(test_vector);
+    let sq_result = sq.quantize(test_vector).unwrap();
     assert_eq!(sq_result.len(), 10);
 
     // PQ
@@ -54,11 +55,11 @@ fn test_sq_edge_values() {
     let sq = ScalarQuantizer::new(-1.0, 1.0, 256).unwrap();
 
     let edge_values = vec![-1.0, 1.0, 0.0];
-    let result = sq.quantize(&edge_values);
+    let result = sq.quantize(&edge_values).unwrap();
     assert_eq!(result.len(), 3);
 
     let outside_values = vec![-100.0, 100.0];
-    let result = sq.quantize(&outside_values);
+    let result = sq.quantize(&outside_values).unwrap();
     assert_eq!(result.len(), 2);
 }
 
@@ -67,7 +68,7 @@ fn test_bq_zero_threshold() {
     let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
 
     let values = vec![0.0, -0.0, f32::MIN_POSITIVE, -f32::MIN_POSITIVE];
-    let result = bq.quantize(&values);
+    let result = bq.quantize(&values).unwrap();
 
     assert_eq!(result[0], 1);
     assert_eq!(result[1], 1);

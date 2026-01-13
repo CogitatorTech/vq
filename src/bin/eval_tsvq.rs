@@ -9,6 +9,7 @@ use std::time::Instant;
 use vq::distance::Distance;
 use vq::tsvq::TSVQ;
 use vq::vector::Vector;
+use vq::Quantizer;
 
 #[derive(Parser)]
 #[command(name = "eval_tsvq")]

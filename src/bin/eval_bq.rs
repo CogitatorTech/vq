@@ -6,6 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use std::time::Instant;
 use vq::bq::BinaryQuantizer;
+use vq::Quantizer;
 
 #[derive(Parser)]
 #[command(name = "eval_bq")]
@@ -35,7 +36,7 @@ fn main() -> Result<()> {
         let start = Instant::now();
         let _quantized: Vec<Vec<u8>> = original_data
             .iter()
-            .map(|vec| bq.quantize(&vec.data))
+            .filter_map(|vec| bq.quantize(&vec.data).ok())
             .collect();
         let quantization_time = start.elapsed().as_millis() as f64;
 

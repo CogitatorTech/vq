@@ -57,17 +57,17 @@ Here's a simple example using the SQ algorithm to quantize a vector:
 ```rust
 use vq::bq::BinaryQuantizer;
 use vq::sq::ScalarQuantizer;
-use vq::VqResult;
+use vq::{Quantizer, VqResult};
 
 fn main() -> VqResult<()> {
     // Binary quantization
     let bq = BinaryQuantizer::new(0.0, 0, 1)?;
-    let quantized = bq.quantize(&[0.5, -0.3, 0.8]);
-    
+    let quantized = bq.quantize(&[0.5, -0.3, 0.8])?;
+
     // Scalar quantization
     let sq = ScalarQuantizer::new(0.0, 1.0, 256)?;
-    let quantized = sq.quantize(&[0.1, 0.5, 0.9]);
-    
+    let quantized = sq.quantize(&[0.1, 0.5, 0.9])?;
+
     Ok(())
 }
 ```
@@ -85,7 +85,7 @@ fn main() -> VqResult<()> {
         .map(|i| (0..10).map(|j| ((i + j) % 50) as f32).collect())
         .collect();
     let training_refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
-    
+
     // Train the quantizer
     let pq = ProductQuantizer::new(
         &training_refs,
@@ -95,10 +95,10 @@ fn main() -> VqResult<()> {
         Distance::Euclidean,
         42, // seed
     )?;
-    
+
     // Quantize a vector
     let quantized = pq.quantize(&training[0])?;
-    
+
     Ok(())
 }
 ```

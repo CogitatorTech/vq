@@ -1,13 +1,28 @@
 use crate::exceptions::{VqError, VqResult};
+use crate::traits::Quantizer;
 
+/// Scalar quantizer that uniformly quantizes values in a range to discrete levels.
 pub struct ScalarQuantizer {
-    pub min: f32,
-    pub max: f32,
-    pub levels: usize,
-    pub step: f32,
+    min: f32,
+    max: f32,
+    levels: usize,
+    step: f32,
 }
 
 impl ScalarQuantizer {
+    /// Creates a new scalar quantizer.
+    ///
+    /// # Arguments
+    ///
+    /// * `min` - Minimum value in the quantization range
+    /// * `max` - Maximum value in the quantization range
+    /// * `levels` - Number of quantization levels (2-256)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - `max <= min`
+    /// - `levels < 2` or `levels > 256`
     pub fn new(min: f32, max: f32, levels: usize) -> VqResult<Self> {
         if max <= min {
             return Err(VqError::InvalidParameter(
@@ -33,17 +48,48 @@ impl ScalarQuantizer {
         })
     }
 
-    pub fn quantize(&self, slice: &[f32]) -> Vec<u8> {
-        slice
-            .iter()
-            .map(|&x| self.quantize_scalar(x) as u8)
-            .collect()
+    /// Returns the minimum value in the quantization range.
+    pub fn min(&self) -> f32 {
+        self.min
+    }
+
+    /// Returns the maximum value in the quantization range.
+    pub fn max(&self) -> f32 {
+        self.max
+    }
+
+    /// Returns the number of quantization levels.
+    pub fn levels(&self) -> usize {
+        self.levels
+    }
+
+    /// Returns the step size between quantization levels.
+    pub fn step(&self) -> f32 {
+        self.step
     }
 
     fn quantize_scalar(&self, x: f32) -> usize {
         let clamped = x.clamp(self.min, self.max);
         let index = ((clamped - self.min) / self.step).round() as usize;
         index.min(self.levels - 1)
+    }
+}
+
+impl Quantizer for ScalarQuantizer {
+    type QuantizedOutput = Vec<u8>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        Ok(vector
+            .iter()
+            .map(|&x| self.quantize_scalar(x) as u8)
+            .collect())
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        Ok(quantized
+            .iter()
+            .map(|&idx| self.min + idx as f32 * self.step)
+            .collect())
     }
 }
 
@@ -56,12 +102,12 @@ mod tests {
         let sq = ScalarQuantizer::new(-1.0, 1.0, 5).unwrap();
         let test_values = vec![-1.2, -1.0, -0.8, -0.3, 0.0, 0.3, 0.6, 1.0, 1.2];
         for x in test_values {
-            let indices = sq.quantize(&[x]);
+            let indices = sq.quantize(&[x]).unwrap();
             assert_eq!(indices.len(), 1);
-            let reconstructed = sq.min + indices[0] as f32 * sq.step;
-            let clamped = x.clamp(sq.min, sq.max);
+            let reconstructed = sq.min() + indices[0] as f32 * sq.step();
+            let clamped = x.clamp(sq.min(), sq.max());
             let error = (reconstructed - clamped).abs();
-            assert!(error <= sq.step / 2.0 + 1e-6);
+            assert!(error <= sq.step() / 2.0 + 1e-6);
         }
     }
 
@@ -69,7 +115,7 @@ mod tests {
     fn test_large_vectors() {
         let sq = ScalarQuantizer::new(-1000.0, 1000.0, 256).unwrap();
         let input: Vec<f32> = (0..1024).map(|i| (i as f32) - 512.0).collect();
-        let result = sq.quantize(&input);
+        let result = sq.quantize(&input).unwrap();
         assert_eq!(result.len(), 1024);
     }
 

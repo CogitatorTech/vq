@@ -1,12 +1,25 @@
 use crate::exceptions::{VqError, VqResult};
+use crate::traits::Quantizer;
 
+/// Binary quantizer that maps values above/below a threshold to two discrete levels.
 pub struct BinaryQuantizer {
-    pub threshold: f32,
-    pub low: u8,
-    pub high: u8,
+    threshold: f32,
+    low: u8,
+    high: u8,
 }
 
 impl BinaryQuantizer {
+    /// Creates a new binary quantizer.
+    ///
+    /// # Arguments
+    ///
+    /// * `threshold` - Values >= threshold map to `high`, values < threshold map to `low`
+    /// * `low` - The output value for inputs below the threshold
+    /// * `high` - The output value for inputs at or above the threshold
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `low >= high`.
     pub fn new(threshold: f32, low: u8, high: u8) -> VqResult<Self> {
         if low >= high {
             return Err(VqError::InvalidParameter(
@@ -20,8 +33,27 @@ impl BinaryQuantizer {
         })
     }
 
-    pub fn quantize(&self, slice: &[f32]) -> Vec<u8> {
-        slice
+    /// Returns the threshold value.
+    pub fn threshold(&self) -> f32 {
+        self.threshold
+    }
+
+    /// Returns the low quantization level.
+    pub fn low(&self) -> u8 {
+        self.low
+    }
+
+    /// Returns the high quantization level.
+    pub fn high(&self) -> u8 {
+        self.high
+    }
+}
+
+impl Quantizer for BinaryQuantizer {
+    type QuantizedOutput = Vec<u8>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        Ok(vector
             .iter()
             .map(|&x| {
                 if x >= self.threshold {
@@ -30,7 +62,14 @@ impl BinaryQuantizer {
                     self.low
                 }
             })
-            .collect()
+            .collect())
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        Ok(quantized
+            .iter()
+            .map(|&x| if x >= self.high { 1.0 } else { 0.0 })
+            .collect())
     }
 }
 
@@ -42,7 +81,7 @@ mod tests {
     fn test_basic() {
         let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
         let input = vec![-1.0, 0.0, 1.0, -0.5, 0.5];
-        let result = bq.quantize(&input);
+        let result = bq.quantize(&input).unwrap();
         assert_eq!(result, vec![0, 1, 1, 0, 1]);
     }
 
@@ -50,7 +89,7 @@ mod tests {
     fn test_large_vector() {
         let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
         let input: Vec<f32> = (0..1024).map(|i| (i as f32) - 512.0).collect();
-        let result = bq.quantize(&input);
+        let result = bq.quantize(&input).unwrap();
         assert_eq!(result.len(), 1024);
 
         for (i, &val) in result.iter().enumerate() {

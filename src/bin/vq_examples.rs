@@ -3,7 +3,7 @@ use vq::distance::Distance;
 use vq::pq::ProductQuantizer;
 use vq::sq::ScalarQuantizer;
 use vq::tsvq::TSVQ;
-use vq::VqResult;
+use vq::{Quantizer, VqResult};
 
 fn main() -> VqResult<()> {
     println!("=== Vq Examples ===\n");
@@ -21,7 +21,7 @@ fn example_bq() -> VqResult<()> {
     println!("Binary Quantizer:");
     let bq = BinaryQuantizer::new(0.0, 0, 1)?;
     let input = vec![-0.5, 0.0, 0.5, 1.0, -1.0];
-    let quantized = bq.quantize(&input);
+    let quantized = bq.quantize(&input)?;
     println!("  Input: {:?}", input);
     println!("  Output: {:?}\n", quantized);
     Ok(())
@@ -31,7 +31,7 @@ fn example_sq() -> VqResult<()> {
     println!("Scalar Quantizer:");
     let sq = ScalarQuantizer::new(-1.0, 1.0, 256)?;
     let input = vec![-0.5, 0.0, 0.5, 1.0, -1.0];
-    let quantized = sq.quantize(&input);
+    let quantized = sq.quantize(&input)?;
     println!("  Input: {:?}", input);
     println!("  Output: {:?}\n", quantized);
     Ok(())
