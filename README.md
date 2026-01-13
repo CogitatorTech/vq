@@ -107,7 +107,7 @@ fn main() -> VqResult<()> {
 }
 ```
 
-### Product Quantizer Example
+#### Product Quantizer Example
 
 ```rust
 use vq::distance::Distance;
