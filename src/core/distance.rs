@@ -3,15 +3,37 @@ use crate::core::error::{VqError, VqResult};
 #[cfg(feature = "simd")]
 use crate::core::hsdlib_ffi;
 
+/// Supported distance metrics for vector comparisons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Distance {
+    /// Squared Euclidean distance (L2^2). efficient for comparisons as it avoids square roots.
     SquaredEuclidean,
+    /// Euclidean distance (L2).
     Euclidean,
+    /// Manhattan distance (L1). Sum of absolute differences.
     Manhattan,
+    /// Cosine distance, defined as `1.0 - cosine_similarity`.
     CosineDistance,
 }
 
 impl Distance {
+    /// Computes the distance between two vectors using the specified metric.
+    ///
+    /// If the `simd` feature is enabled, this method will use SIMD-accelerated
+    /// implementations when available (AVX/AVX2/FMA for x86, NEON for ARM).
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - First vector
+    /// * `b` - Second vector
+    ///
+    /// # Returns
+    ///
+    /// The computed distance as an `f32`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `VqError::DimensionMismatch` if the vectors have different lengths.
     #[inline]
     pub fn compute(&self, a: &[f32], b: &[f32]) -> VqResult<f32> {
         if a.len() != b.len() {

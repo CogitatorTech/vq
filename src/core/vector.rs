@@ -5,6 +5,10 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use crate::core::error::{VqError, VqResult};
 
+/// A trait for numeric types representing vector components.
+///
+/// This trait is implemented for `f32` (using standard `f32` operations)
+/// and `f16` (using the `half` crate).
 pub trait Real:
     Copy
     + Clone
@@ -18,10 +22,15 @@ pub trait Real:
     + Send
     + Sync
 {
+    /// Returns the additive identity.
     fn zero() -> Self;
+    /// Returns the multiplicative identity.
     fn one() -> Self;
+    /// Converts a `usize` to this type.
     fn from_usize(n: usize) -> Self;
+    /// Computes the square root.
     fn sqrt(self) -> Self;
+    /// Computes the absolute value.
     fn abs(self) -> Self;
 }
 
@@ -61,28 +70,42 @@ impl Real for f16 {
     }
 }
 
+/// A generic vector struct holding components of type `T`.
+///
+/// Wraps a standard `Vec<T>` and provides vector arithmetic operations
+/// like addition, subtraction, dot product, and norm.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vector<T: Real> {
+    /// The underlying data storage.
     pub data: Vec<T>,
 }
 
 impl<T: Real> Vector<T> {
+    /// Creates a new `Vector` taking ownership of the data.
     pub fn new(data: Vec<T>) -> Self {
         Self { data }
     }
 
+    /// Returns the number of elements in the vector.
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns `true` if the vector contains no elements.
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
+    /// Returns a slice containing the vector data.
     pub fn data(&self) -> &[T] {
         &self.data
     }
 
+    /// Computes the dot product with another vector.
+    ///
+    /// # Panics
+    ///
+    /// Currently does not panic on dimension mismatch here due to zip, but higher level operations enforce dimensions.
     #[inline]
     pub fn dot(&self, other: &Self) -> T {
         self.data
@@ -91,11 +114,16 @@ impl<T: Real> Vector<T> {
             .fold(T::zero(), |acc, (&a, &b)| acc + a * b)
     }
 
+    /// Computes the Euclidean norm (length) of the vector.
     #[inline]
     pub fn norm(&self) -> T {
         self.dot(self).sqrt()
     }
 
+    /// Computes the squared Euclidean distance to another vector.
+    ///
+    /// This is often more efficient than computing full Euclidean distance
+    /// for comparisons (e.g. finding nearest neighbor).
     #[inline]
     pub fn distance2(&self, other: &Self) -> T {
         self.data
@@ -179,6 +207,11 @@ impl<T: Real> fmt::Display for Vector<T> {
     }
 }
 
+/// Computes the mean vector of a sequence of vectors.
+///
+/// # Errors
+///
+/// Returns `VqError::EmptyInput` if the input slice is empty.
 pub fn mean_vector<T: Real>(vectors: &[Vector<T>]) -> VqResult<Vector<T>> {
     if vectors.is_empty() {
         return Err(VqError::EmptyInput);
