@@ -90,10 +90,10 @@ install-deps: install-snap ## Install development dependencies
 	@echo "Installing development dependencies..."
 	@rustup component add rustfmt clippy
 	# Install each tool with a specific, pinned version
-	@cargo install --locked cargo-tarpaulin --version ${TARPAULIN_VERSION}
-	@cargo install --locked cargo-nextest --version ${NEXTEST_VERSION}
-	@cargo install --locked cargo-audit --version ${AUDIT_VERSION}
-	@cargo install --locked cargo-careful --version ${CAREFUL_VERSION}
+	@cargo install cargo-tarpaulin #--locked --version ${TARPAULIN_VERSION}
+	@cargo install cargo-nextest #--locked --version ${NEXTEST_VERSION}
+	@cargo install cargo-audit #--locked --version ${AUDIT_VERSION}
+	@cargo install cargo-careful #--locked --version ${CAREFUL_VERSION}
 	@sudo apt-get install python3-pip libfontconfig1-dev
 	@pip install $(PY_DEP_MNGR)
 
