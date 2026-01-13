@@ -12,8 +12,6 @@ It outlines features to be implemented and their current status.
 * [x] Scalar Quantizer (SQ)
 * [x] Product Quantizer (PQ)
 * [x] Tree-Structured Vector Quantizer (TSVQ)
-* [ ] Inverted File System (IVF)
-* [ ] Residue Quantization
 
 ### 2. Distance Metrics
 
@@ -30,7 +28,7 @@ It outlines features to be implemented and their current status.
 * [x] Generic `Vector` struct
 * [x] Codebook training (LBG/k-means)
 * [x] `dequantize` support
-* [ ] Persistent serialization (save/load models)
+* [ ] Persistent serialization (save and load models)
 * [ ] Streaming training support
 
 ### 4. Performance Optimizations
@@ -38,7 +36,7 @@ It outlines features to be implemented and their current status.
 * [x] Parallel training (Rayon)
 * [x] Inline hints for hot paths
 * [x] Zero-copy training (allocation reduction)
-* [x] SIMD Acceleration (x86_64 AVX/AVX2/FMA)
+* [x] SIMD Acceleration (x86_64 AVX/AVX2/AVX512)
 * [x] SIMD Acceleration (ARM NEON)
 * [x] Runtime CPU feature detection
 * [ ] SIMD for `f16` (half-precision)
@@ -52,7 +50,6 @@ It outlines features to be implemented and their current status.
 ### 6. Tools & Binaries
 
 * [x] `eval` tool for algorithm comparison
-* [x] `vq-examples` binary
 * [ ] CLI for direct file quantization
 * [ ] Benchmark suite (internal `cargo bench`)
 
