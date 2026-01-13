@@ -1,128 +1,133 @@
-//! # Scalar Quantizer Implementation
-//!
-//! This module provides a scalar quantizer that maps floating-point values to a set of discrete values (or levels).
-//! The quantizer is configured with a minimum and maximum value and a specified number of levels.
-//! Each input value is first clamped to the `[min, max]` range and then uniformly quantized into one of the levels.
-//! The quantized result is represented as a `u8`. For large input vectors, parallel processing is used
-//! to improve performance.
-//!
-//! Custom error handling is integrated to validate parameters. For example, the `fit` method will panic
-//! with a custom error if the parameters are invalid (e.g. `max` is not greater than `min`, or if the number of levels
-//! is not between 2 and 256).
-//!
-//! # Example
-//! ```
-//! use vq::vector::Vector;
-//! use vq::sq::ScalarQuantizer;
-//!
-//! let quantizer = ScalarQuantizer::fit(0.0, 1.0, 256);
-//! let input = Vector::new(vec![0.0, 0.5, 1.0]);
-//! let output = quantizer.quantize(&input);
-//! // output is a Vector<u8> with quantized values.
-//! ```
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
 
-use crate::exceptions::VqError;
-use crate::vector::{Vector, PARALLEL_THRESHOLD};
-use rayon::prelude::*;
-
-/// A scalar quantizer that maps floating-point values to a set of discrete levels (levels).
+/// Scalar quantizer that uniformly quantizes values in a range to discrete levels.
 pub struct ScalarQuantizer {
-    /// The minimum value in the quantizer range.
-    pub min: f32,
-    /// The maximum value in the quantizer range.
-    pub max: f32,
-    /// The number of quantization levels (must be at least 2 and no more than 256).
-    pub levels: usize,
-    /// The step size computed as `(max - min) / (levels - 1)`.
-    pub step: f32,
+    min: f32,
+    max: f32,
+    levels: usize,
+    step: f32,
 }
 
 impl ScalarQuantizer {
-    /// Creates a new `ScalarQuantizer`.
+    /// Creates a new scalar quantizer.
     ///
-    /// # Parameters
-    /// - `min`: The minimum value in the quantizer's range.
-    /// - `max`: The maximum value in the quantizer's range. Must be greater than `min`.
-    /// - `levels`: The number of quantization levels. Must be between 2 and 256.
+    /// # Arguments
     ///
-    /// # Panics
-    /// Panics with a custom error if `max` is not greater than `min`, or if `levels` is not within the valid range.
-    pub fn fit(min: f32, max: f32, levels: usize) -> Self {
+    /// * `min` - Minimum value in the quantization range
+    /// * `max` - Maximum value in the quantization range
+    /// * `levels` - Number of quantization levels (2-256)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - `max <= min`
+    /// - `levels < 2` or `levels > 256`
+    pub fn new(min: f32, max: f32, levels: usize) -> VqResult<Self> {
         if max <= min {
-            panic!(
-                "{}",
-                VqError::InvalidParameter("max must be greater than min".to_string())
-            );
+            return Err(VqError::InvalidParameter(
+                "max must be greater than min".to_string(),
+            ));
         }
         if levels < 2 {
-            panic!(
-                "{}",
-                VqError::InvalidParameter("levels must be at least 2".to_string())
-            );
+            return Err(VqError::InvalidParameter(
+                "levels must be at least 2".to_string(),
+            ));
         }
         if levels > 256 {
-            panic!(
-                "{}",
-                VqError::InvalidParameter("levels must be no more than 256".to_string())
-            );
+            return Err(VqError::InvalidParameter(
+                "levels must be no more than 256".to_string(),
+            ));
         }
         let step = (max - min) / (levels - 1) as f32;
-        Self {
+        Ok(Self {
             min,
             max,
             levels,
             step,
+        })
+    }
+
+    /// Returns the minimum value in the quantization range.
+    pub fn min(&self) -> f32 {
+        self.min
+    }
+
+    /// Returns the maximum value in the quantization range.
+    pub fn max(&self) -> f32 {
+        self.max
+    }
+
+    /// Returns the number of quantization levels.
+    pub fn levels(&self) -> usize {
+        self.levels
+    }
+
+    /// Returns the step size between quantization levels.
+    pub fn step(&self) -> f32 {
+        self.step
+    }
+
+    fn quantize_scalar(&self, x: f32) -> usize {
+        let clamped = x.clamp(self.min, self.max);
+        let index = ((clamped - self.min) / self.step).round() as usize;
+        index.min(self.levels - 1)
+    }
+}
+
+impl Quantizer for ScalarQuantizer {
+    type QuantizedOutput = Vec<u8>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        Ok(vector
+            .iter()
+            .map(|&x| self.quantize_scalar(x) as u8)
+            .collect())
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        Ok(quantized
+            .iter()
+            .map(|&idx| self.min + idx as f32 * self.step)
+            .collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_on_scalars() {
+        let sq = ScalarQuantizer::new(-1.0, 1.0, 5).unwrap();
+        let test_values = vec![-1.2, -1.0, -0.8, -0.3, 0.0, 0.3, 0.6, 1.0, 1.2];
+        for x in test_values {
+            let indices = sq.quantize(&[x]).unwrap();
+            assert_eq!(indices.len(), 1);
+            let reconstructed = sq.min() + indices[0] as f32 * sq.step();
+            let clamped = x.clamp(sq.min(), sq.max());
+            let error = (reconstructed - clamped).abs();
+            assert!(error <= sq.step() / 2.0 + 1e-6);
         }
     }
 
-    /// Quantizes an input vector by mapping each element to one of the discrete levels.
-    ///
-    /// Each element is clamped to the `[min, max]` range and then mapped to the nearest
-    /// quantization level using uniform quantization. If the input vector's length exceeds
-    /// `PARALLEL_THRESHOLD`, parallel iteration is used to improve performance.
-    ///
-    /// # Parameters
-    /// - `vector`: A reference to the input vector (`Vector<f32>`) to quantize.
-    ///
-    /// # Returns
-    /// A new vector (`Vector<u8>`) containing the quantized values.
-    pub fn quantize(&self, vector: &Vector<f32>) -> Vector<u8> {
-        let quantized_vector: Vec<u8> = if vector.data.len() > PARALLEL_THRESHOLD {
-            // Use parallel iteration for large vectors.
-            vector
-                .data
-                .par_iter()
-                .map(|&x| self.quantize_scalar(x) as u8)
-                .collect()
-        } else {
-            // Otherwise, process sequentially.
-            vector
-                .data
-                .iter()
-                .map(|&x| self.quantize_scalar(x) as u8)
-                .collect()
-        };
-        Vector::new(quantized_vector)
+    #[test]
+    fn test_large_vectors() {
+        let sq = ScalarQuantizer::new(-1000.0, 1000.0, 256).unwrap();
+        let input: Vec<f32> = (0..1024).map(|i| (i as f32) - 512.0).collect();
+        let result = sq.quantize(&input).unwrap();
+        assert_eq!(result.len(), 1024);
     }
 
-    /// Quantizes a single scalar value.
-    ///
-    /// The value is clamped to the `[min, max]` range and then uniformly quantized using the step size.
-    ///
-    /// # Parameters
-    /// - `x`: The scalar value to quantize.
-    ///
-    /// # Returns
-    /// The index (as `usize`) corresponding to the quantized level.
-    fn quantize_scalar(&self, x: f32) -> usize {
-        let clamped = if x < self.min {
-            self.min
-        } else if x > self.max {
-            self.max
-        } else {
-            x
-        };
-        let index = ((clamped - self.min) / self.step).round() as usize;
-        index.min(self.levels - 1)
+    #[test]
+    fn test_invalid_range() {
+        let result = ScalarQuantizer::new(1.0, -1.0, 5);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_too_few_levels() {
+        let result = ScalarQuantizer::new(-1.0, 1.0, 1);
+        assert!(result.is_err());
     }
 }

@@ -3,7 +3,7 @@
 use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
-use vq::vector::Vector;
+use vq::Vector;
 
 pub const SEED: u64 = 42;
 pub const MIN_VAL: f32 = -1000.0;

@@ -1,105 +1,138 @@
-//! # Binary Quantizer Implementation
-//!
-//! This module provides a simple binary quantizer that maps floating-point values
-//! to one of two discrete levels. It assigns each value in an input vector to either the
-//! "high" level or the "low" level based on a specified threshold. For large input vectors,
-//! parallel processing (via Rayon) is used to speed up quantization.
-//!
-//! The quantizer also includes basic parameter checking using custom errors from the
-//! exceptions module.
-//!
-//! # Examples
-//! ```
-//! use vq::vector::Vector;
-//! use vq::bq::BinaryQuantizer;
-//!
-//! let quantizer = BinaryQuantizer::fit(0.5, 0, 1);
-//! let input = Vector::new(vec![0.3, 0.5, 0.8]);
-//! let quantized = quantizer.quantize(&input);
-//! // quantized now contains [0, 1, 1]
-//! ```
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
 
-use crate::exceptions::VqError;
-use crate::vector::{Vector, PARALLEL_THRESHOLD};
-use rayon::prelude::*;
-
-/// A simple binary quantizer that maps floating-point values to one of two discrete values (levels).
+/// Binary quantizer that maps values above/below a threshold to two discrete levels.
 pub struct BinaryQuantizer {
-    /// The threshold value used to determine whether an element is quantized to `high` or `low`.
-    pub threshold: f32,
-    /// The quantized value assigned to inputs that are below the threshold.
-    pub low: u8,
-    /// The quantized value assigned to inputs that are at or above the threshold.
-    pub high: u8,
+    threshold: f32,
+    low: u8,
+    high: u8,
 }
 
 impl BinaryQuantizer {
-    /// Creates a new `BinaryQuantizer` with the specified threshold and quantization levels.
+    /// Creates a new binary quantizer.
     ///
-    /// # Parameters
-    /// - `threshold`: The threshold value used for quantization.
-    /// - `low`: The quantized value to assign for input values below the threshold.
-    /// - `high`: The quantized value to assign for input values at or above the threshold.
+    /// # Arguments
     ///
-    /// # Panics
-    /// Panics with a custom error if `low` is not less than `high`.
-    pub fn fit(threshold: f32, low: u8, high: u8) -> Self {
+    /// * `threshold` - Values >= threshold map to `high`, values < threshold map to `low`
+    /// * `low` - The output value for inputs below the threshold
+    /// * `high` - The output value for inputs at or above the threshold
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `low >= high`.
+    pub fn new(threshold: f32, low: u8, high: u8) -> VqResult<Self> {
         if low >= high {
-            panic!(
-                "{}",
-                VqError::InvalidParameter(
-                    "Low quantization level must be less than high quantization level".to_string()
-                )
-            );
+            return Err(VqError::InvalidParameter(
+                "Low quantization level must be less than high quantization level".to_string(),
+            ));
         }
-        Self {
+        Ok(Self {
             threshold,
             low,
             high,
+        })
+    }
+
+    /// Returns the threshold value.
+    pub fn threshold(&self) -> f32 {
+        self.threshold
+    }
+
+    /// Returns the low quantization level.
+    pub fn low(&self) -> u8 {
+        self.low
+    }
+
+    /// Returns the high quantization level.
+    pub fn high(&self) -> u8 {
+        self.high
+    }
+}
+
+impl Quantizer for BinaryQuantizer {
+    type QuantizedOutput = Vec<u8>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        Ok(vector
+            .iter()
+            .map(|&x| {
+                if x >= self.threshold {
+                    self.high
+                } else {
+                    self.low
+                }
+            })
+            .collect())
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        Ok(quantized
+            .iter()
+            .map(|&x| if x >= self.high { 1.0 } else { 0.0 })
+            .collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_basic() {
+        let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+        let input = vec![-1.0, 0.0, 1.0, -0.5, 0.5];
+        let result = bq.quantize(&input).unwrap();
+        assert_eq!(result, vec![0, 1, 1, 0, 1]);
+    }
+
+    #[test]
+    fn test_large_vector() {
+        let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+        let input: Vec<f32> = (0..1024).map(|i| (i as f32) - 512.0).collect();
+        let result = bq.quantize(&input).unwrap();
+        assert_eq!(result.len(), 1024);
+
+        for (i, &val) in result.iter().enumerate() {
+            let expected = if input[i] >= 0.0 { 1 } else { 0 };
+            assert_eq!(val, expected);
         }
     }
 
-    /// Quantizes an input vector by mapping each element to either the low or high value based on the threshold.
-    ///
-    /// For each element in the input vector:
-    /// - If the value is greater than or equal to `self.threshold`, it is mapped to `self.high`.
-    /// - Otherwise, it is mapped to `self.low`.
-    ///
-    /// If the input vector's length exceeds `PARALLEL_THRESHOLD`, the mapping is performed in parallel.
-    ///
-    /// # Parameters
-    /// - `vector`: A reference to the input vector (`Vector<f32>`) to be quantized.
-    ///
-    /// # Returns
-    /// A new vector (`Vector<u8>`) containing the quantized values.
-    pub fn quantize(&self, vector: &Vector<f32>) -> Vector<u8> {
-        let quantized_vector = if vector.data.len() > PARALLEL_THRESHOLD {
-            // Use parallel iteration when the vector is large.
-            vector
-                .data
-                .par_iter()
-                .map(|&x| {
-                    if x >= self.threshold {
-                        self.high
-                    } else {
-                        self.low
-                    }
-                })
-                .collect()
-        } else {
-            // Otherwise, use sequential iteration.
-            vector
-                .data
-                .iter()
-                .map(|&x| {
-                    if x >= self.threshold {
-                        self.high
-                    } else {
-                        self.low
-                    }
-                })
-                .collect()
-        };
-        Vector::new(quantized_vector)
+    #[test]
+    fn test_invalid_levels() {
+        let result = BinaryQuantizer::new(0.0, 1, 0);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_getters() {
+        let bq = BinaryQuantizer::new(0.5, 10, 20).unwrap();
+        assert_eq!(bq.threshold(), 0.5);
+        assert_eq!(bq.low(), 10);
+        assert_eq!(bq.high(), 20);
+    }
+
+    #[test]
+    fn test_invalid_parameters() {
+        // low == high
+        let result = BinaryQuantizer::new(0.0, 5, 5);
+        assert!(result.is_err());
+
+        // low > high
+        let result = BinaryQuantizer::new(0.0, 6, 5);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_empty_input() {
+        let bq = BinaryQuantizer::new(0.0, 0, 1).unwrap();
+        let input: Vec<f32> = vec![];
+        let result = bq.quantize(&input).unwrap();
+        assert!(result.is_empty());
+
+        // Dequantize empty
+        let empty_codes: Vec<u8> = vec![];
+        let reconstructed = bq.dequantize(&empty_codes).unwrap();
+        assert!(reconstructed.is_empty());
     }
 }

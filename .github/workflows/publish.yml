@@ -1,10 +1,17 @@
 name: Publish to Crates.io
 
 on:
-  workflow_dispatch: { } # Allow manual execution
+  workflow_dispatch:
   push:
     tags:
-      - 'v*' # Trigger on version tags
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
@@ -22,6 +29,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1

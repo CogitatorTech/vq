@@ -1,0 +1,3 @@
+[submodule "external/hsdlib"]
+	path = external/hsdlib
+	url = https://github.com/habedi/hsdlib

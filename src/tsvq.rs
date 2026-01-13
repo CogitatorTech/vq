@@ -1,92 +1,33 @@
-//! # Tree-Structured Vector Quantizer Implementation
-//!
-//! This module implements a Tree-Structured Vector Quantizer (TSVQ) that builds a binary tree
-//! by recursively partitioning training data along the dimension with maximum variance. Each node
-//! stores the centroid (mean) of its data, and leaf nodes provide the final quantized representations.
-//! During quantization, the TSVQ tree is traversed (using a given distance metric) to select the leaf
-//! whose centroid best approximates the input vector. The final quantized vector is obtained by
-//! converting the leaf centroid from `f32` to half-precision (`f16`).
-//!
-//! # Errors
-//! The methods in this module panic with custom errors from the exceptions module when:
-//! - The training data is empty.
-//! - The input vector’s dimension does not match the expected dimension.
-//!
-//! # Example
-//! ```
-//! use vq::vector::Vector;
-//! use vq::distances::Distance;
-//! use vq::tsvq::TSVQ;
-//! use half::f16;
-//!
-//! // Create a small training dataset. Each vector has dimension 3.
-//! let training_data = vec![
-//!     Vector::new(vec![0.0, 0.0, 0.0]),
-//!     Vector::new(vec![1.0, 1.0, 1.0]),
-//!     Vector::new(vec![0.5, 0.5, 0.5]),
-//! ];
-//!
-//! // Build a TSVQ tree with a maximum depth of 2.
-//! let distance = Distance::Euclidean;
-//! let tsvq = TSVQ::new(&training_data, 2, distance);
-//!
-//! // Quantize an input vector.
-//! let input = Vector::new(vec![0.2, 0.8, 0.3]);
-//! let quantized = tsvq.quantize(&input);
-//! println!("Quantized vector: {:?}", quantized);
-//! ```
-
-use crate::distances::Distance;
-use crate::exceptions::VqError;
-use crate::vector::{mean_vector, Vector};
+use crate::core::distance::Distance;
+use crate::core::error::{VqError, VqResult};
+use crate::core::quantizer::Quantizer;
+use crate::core::vector::{mean_vector, Vector};
 use half::f16;
-use rayon::prelude::*;
 
-/// A node in the Tree-Structured Vector Quantizer (TSVQ) tree.
-///
-/// Each node holds a centroid (the mean of the training data at that node)
-/// and optionally left/right child nodes representing further splits.
 struct TSVQNode {
-    /// The centroid of the training data at this node.
-    pub centroid: Vector<f32>,
-    /// Left subtree (if any).
-    pub left: Option<Box<TSVQNode>>,
-    /// Right subtree (if any).
-    pub right: Option<Box<TSVQNode>>,
+    centroid: Vector<f32>,
+    left: Option<Box<TSVQNode>>,
+    right: Option<Box<TSVQNode>>,
 }
 
 impl TSVQNode {
-    /// Recursively builds a TSVQ node from the given training data.
-    ///
-    /// # Parameters
-    /// - `training_data`: A slice of training vectors used to build this node.
-    /// - `max_depth`: The maximum depth of recursion. When 0 or if there is only one
-    ///   training vector, the node is a leaf.
-    ///
-    /// # Returns
-    /// A `TSVQNode` containing the centroid and (optionally) left/right child nodes.
-    ///
-    /// # Panics
-    /// Panics with a custom error if `training_data` is empty.
-    pub fn fit(training_data: &[Vector<f32>], max_depth: usize) -> Self {
+    fn build(training_data: &[Vector<f32>], max_depth: usize) -> VqResult<Self> {
         if training_data.is_empty() {
-            panic!("{}", VqError::EmptyInput);
+            return Err(VqError::EmptyInput);
         }
-        // Compute the centroid of the training data.
-        let centroid = mean_vector(training_data);
-        // If we've reached maximum depth or have one or fewer vectors, make a leaf.
+
+        let centroid = mean_vector(training_data)?;
+
         if max_depth == 0 || training_data.len() <= 1 {
-            return TSVQNode {
+            return Ok(TSVQNode {
                 centroid,
                 left: None,
                 right: None,
-            };
+            });
         }
-        let dim = centroid.len();
 
-        // Compute variances in parallel for each dimension.
+        let dim = centroid.len();
         let variances: Vec<f32> = (0..dim)
-            .into_par_iter()
             .map(|i| {
                 training_data
                     .iter()
@@ -98,153 +39,177 @@ impl TSVQNode {
             })
             .collect();
 
-        // Select the dimension with maximum variance for splitting.
-        let (split_dim, _) = variances
+        let split_dim = variances
             .iter()
             .enumerate()
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-            .unwrap();
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(i, _)| i)
+            .unwrap_or(0);
 
-        // Extract the values along the chosen dimension and sort them.
         let mut values: Vec<f32> = training_data.iter().map(|v| v.data[split_dim]).collect();
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
-        // Compute the median: if even number of elements, use the average of the two middle values.
         let median = if values.len() % 2 == 0 {
             (values[values.len() / 2 - 1] + values[values.len() / 2]) / 2.0
         } else {
             values[values.len() / 2]
         };
 
-        // Partition the training data based on the median along the split dimension.
-        let (left_data, right_data): (Vec<Vector<f32>>, Vec<Vector<f32>>) = training_data
+        let (left_data, right_data): (Vec<_>, Vec<_>) = training_data
             .iter()
             .cloned()
             .partition(|v| v.data[split_dim] <= median);
 
-        // Recursively build left and right children in parallel.
-        let (left, right) = rayon::join(
-            || {
-                if !left_data.is_empty() && left_data.len() < training_data.len() {
-                    Some(Box::new(TSVQNode::fit(&left_data, max_depth - 1)))
-                } else {
-                    None
-                }
-            },
-            || {
-                if !right_data.is_empty() && right_data.len() < training_data.len() {
-                    Some(Box::new(TSVQNode::fit(&right_data, max_depth - 1)))
-                } else {
-                    None
-                }
-            },
-        );
+        let left = if !left_data.is_empty() && left_data.len() < training_data.len() {
+            Some(Box::new(TSVQNode::build(&left_data, max_depth - 1)?))
+        } else {
+            None
+        };
 
-        TSVQNode {
+        let right = if !right_data.is_empty() && right_data.len() < training_data.len() {
+            Some(Box::new(TSVQNode::build(&right_data, max_depth - 1)?))
+        } else {
+            None
+        };
+
+        Ok(TSVQNode {
             centroid,
             left,
             right,
-        }
+        })
     }
 
-    /// Recursively traverses the TSVQ tree to quantize an input vector.
-    ///
-    /// At each node, the distance between the input vector and the centroids of
-    /// the child nodes is computed using the provided distance metric. The traversal
-    /// proceeds into the child with the smaller distance until a leaf node is reached.
-    ///
-    /// # Parameters
-    /// - `vector`: The input vector to quantize.
-    /// - `distance`: A reference to the distance metric used for comparing vectors.
-    ///
-    /// # Returns
-    /// A reference to the leaf `TSVQNode` whose centroid best approximates the input.
-    pub fn quantize_with_distance<'a>(
-        &'a self,
-        vector: &Vector<f32>,
-        distance: &Distance,
-    ) -> &'a TSVQNode {
+    fn find_leaf<'a>(&'a self, vector: &[f32], distance: &Distance) -> VqResult<&'a TSVQNode> {
         match (&self.left, &self.right) {
             (Some(left), Some(right)) => {
-                let dist_left = distance.compute(&vector.data, &left.centroid.data);
-                let dist_right = distance.compute(&vector.data, &right.centroid.data);
+                let dist_left = distance.compute(vector, &left.centroid.data)?;
+                let dist_right = distance.compute(vector, &right.centroid.data)?;
                 if dist_left <= dist_right {
-                    left.quantize_with_distance(vector, distance)
+                    left.find_leaf(vector, distance)
                 } else {
-                    right.quantize_with_distance(vector, distance)
+                    right.find_leaf(vector, distance)
                 }
             }
-            (Some(left), None) => left.quantize_with_distance(vector, distance),
-            (None, Some(right)) => right.quantize_with_distance(vector, distance),
-            (None, None) => self,
+            (Some(left), None) => left.find_leaf(vector, distance),
+            (None, Some(right)) => right.find_leaf(vector, distance),
+            (None, None) => Ok(self),
         }
     }
 }
 
-/// A Tree-Structured Vector Quantizer (TSVQ) that builds a binary tree for quantization.
-///
-/// The TSVQ is constructed from a set of training data by recursively partitioning
-/// the data along the dimension of maximum variance. Each node stores the mean
-/// (centroid) of its data, and leaf nodes provide the final quantized representations.
+/// Tree-structured vector quantizer using hierarchical clustering.
 pub struct TSVQ {
-    /// The root node of the TSVQ tree.
     root: TSVQNode,
-    /// The distance metric used for traversing the tree.
-    pub distance: Distance,
+    dim: usize,
+    distance: Distance,
 }
 
 impl TSVQ {
-    /// Constructs a new TSVQ from the given training data.
+    /// Creates a new tree-structured vector quantizer.
     ///
-    /// # Parameters
-    /// - `training_data`: A slice of training vectors used to build the tree.
-    /// - `max_depth`: The maximum depth of the TSVQ tree. A larger value allows finer partitions.
-    /// - `distance`: The distance metric to use for comparing vectors during tree traversal.
+    /// # Arguments
     ///
-    /// # Returns
-    /// A new `TSVQ` instance with the constructed tree and stored distance metric.
+    /// * `training_data` - Training vectors for building the tree
+    /// * `max_depth` - Maximum depth of the tree
+    /// * `distance` - Distance metric to use
     ///
-    /// # Panics
-    /// Panics with a custom error if the training data is empty.
-    pub fn new(training_data: &[Vector<f32>], max_depth: usize, distance: Distance) -> Self {
+    /// # Errors
+    ///
+    /// Returns an error if training data is empty.
+    pub fn new(training_data: &[&[f32]], max_depth: usize, distance: Distance) -> VqResult<Self> {
         if training_data.is_empty() {
-            panic!("{}", VqError::EmptyInput);
+            return Err(VqError::EmptyInput);
         }
-        let root = TSVQNode::fit(training_data, max_depth);
-        TSVQ { root, distance }
+
+        let dim = training_data[0].len();
+        let vectors: Vec<Vector<f32>> = training_data
+            .iter()
+            .map(|&slice| Vector::new(slice.to_vec()))
+            .collect();
+
+        let root = TSVQNode::build(&vectors, max_depth)?;
+        Ok(TSVQ {
+            root,
+            dim,
+            distance,
+        })
     }
 
-    /// Quantizes an input vector by traversing the TSVQ tree.
-    ///
-    /// The traversal uses the stored distance metric to determine which branch to follow at each node.
-    /// Once a leaf node is reached, its centroid is returned as the quantized representation.
-    /// The resulting vector is converted to half-precision (`f16`).
-    ///
-    /// # Parameters
-    /// - `vector`: The input vector to quantize.
-    ///
-    /// # Returns
-    /// A quantized vector (`Vector<f16>`) corresponding to the centroid of the selected leaf node.
-    ///
-    /// # Panics
-    /// Panics with a custom error if the input vector's dimension does not match the expected dimension.
-    pub fn quantize(&self, vector: &Vector<f32>) -> Vector<f16> {
-        if vector.len() != self.root.centroid.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.root.centroid.len(),
-                    found: vector.len()
-                }
-            );
+    /// Returns the expected input vector dimension.
+    pub fn dim(&self) -> usize {
+        self.dim
+    }
+}
+
+impl Quantizer for TSVQ {
+    type QuantizedOutput = Vec<f16>;
+
+    fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        if vector.len() != self.dim {
+            return Err(VqError::DimensionMismatch {
+                expected: self.dim,
+                found: vector.len(),
+            });
         }
-        let leaf = self.root.quantize_with_distance(vector, &self.distance);
-        let centroid_f16: Vec<f16> = leaf
+
+        let leaf = self.root.find_leaf(vector, &self.distance)?;
+        let result = leaf
             .centroid
             .data
             .iter()
             .map(|&x| f16::from_f32(x))
             .collect();
-        Vector::new(centroid_f16)
+        Ok(result)
+    }
+
+    fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
+        if quantized.len() != self.dim {
+            return Err(VqError::DimensionMismatch {
+                expected: self.dim,
+                found: quantized.len(),
+            });
+        }
+        Ok(quantized.iter().map(|&x| f16::to_f32(x)).collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_identical_vectors() {
+        let vec = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let data: Vec<&[f32]> = (0..10).map(|_| vec.as_slice()).collect();
+
+        let tsvq = TSVQ::new(&data, 3, Distance::SquaredEuclidean).unwrap();
+        let quantized = tsvq.quantize(&vec).unwrap();
+
+        assert_eq!(quantized.len(), vec.len());
+        for (orig, q) in vec.iter().zip(quantized.iter()) {
+            assert!((orig - f16::to_f32(*q)).abs() < 1e-2);
+        }
+    }
+
+    #[test]
+    fn test_random_vectors() {
+        let data: Vec<Vec<f32>> = (0..100)
+            .map(|i| (0..10).map(|j| ((i + j) % 50) as f32).collect())
+            .collect();
+        let data_refs: Vec<&[f32]> = data.iter().map(|v| v.as_slice()).collect();
+
+        let tsvq = TSVQ::new(&data_refs, 3, Distance::SquaredEuclidean).unwrap();
+
+        for vec in &data {
+            let quantized = tsvq.quantize(vec).unwrap();
+            assert_eq!(quantized.len(), vec.len());
+        }
+    }
+
+    #[test]
+    fn test_empty_training() {
+        let data: Vec<&[f32]> = vec![];
+        let result = TSVQ::new(&data, 3, Distance::Euclidean);
+        assert!(result.is_err());
     }
 }
