@@ -6,103 +6,61 @@ It outlines features to be implemented and their current status.
 > [!IMPORTANT]
 > This roadmap is a work in progress and is subject to change.
 
-### 1. Centrality Algorithms
+### 1. Quantization Algorithms
 
-* [x] PageRank centrality
-* [x] Personalized PageRank
-* [x] Degree centrality (in and out)
-* [x] Betweenness centrality
-* [x] Closeness centrality
-* [x] Harmonic centrality
-* [x] Eigenvector centrality
-* [x] Katz centrality
-* [x] VoteRank (influential spreaders)
-* [x] Local reaching centrality
-* [x] Laplacian centrality
+* [x] Binary Quantizer (BQ)
+* [x] Scalar Quantizer (SQ)
+* [x] Product Quantizer (PQ)
+* [x] Tree-Structured Vector Quantizer (TSVQ)
+* [ ] Inverted File System (IVF)
+* [ ] Residue Quantization
 
-### 2. Community Detection
+### 2. Distance Metrics
 
-* [x] Louvain modularity optimization
-* [x] Connected components
-* [x] Label propagation
-* [x] Girvan-Newman edge betweenness
-* [x] Spectral clustering
-* [x] Infomap community detection
-* [ ] Hierarchical clustering
-* [ ] K-core decomposition
+* [x] Squared Euclidean (L2)
+* [x] Euclidean (L2)
+* [x] Manhattan (L1)
+* [x] Cosine Similarity/Distance
+* [ ] Dot Product (internal only currently)
+* [ ] Hamming Distance
 
-### 3. Path and Traversal Algorithms
+### 3. Core Features
 
-* [x] Dijkstra shortest paths
-* [x] Bellman-Ford shortest paths
-* [x] Breadth-first search (BFS)
-* [x] Depth-first search (DFS)
-* [x] Floyd-Warshall all-pairs shortest paths
-* [ ] Bidirectional search
+* [x] Unified `Quantizer` trait
+* [x] Generic `Vector` struct
+* [x] Codebook training (LBG/k-means)
+* [x] `dequantize` support
+* [ ] Persistent serialization (save/load models)
+* [ ] Streaming training support
 
-### 4. Graph Metrics
+### 4. Performance Optimizations
 
-* [x] Graph diameter
-* [x] Graph radius
-* [x] Average clustering coefficient
-* [x] Transitivity (global clustering)
-* [x] Triangle count per node
-* [x] Assortativity coefficient
-* [x] Average path length
-* [x] Graph density
+* [x] Parallel training (Rayon)
+* [x] Inline hints for hot paths
+* [x] Zero-copy training (allocation reduction)
+* [x] SIMD Acceleration (x86_64 AVX/AVX2/FMA)
+* [x] SIMD Acceleration (ARM NEON)
+* [x] Runtime CPU feature detection
+* [ ] SIMD for `f16` (half-precision)
 
-### 5. Subgraph Operations
+### 5. Language Bindings
 
-* [x] Ego graph extraction
-* [x] K-hop neighbors
-* [x] Induced subgraph
-* [ ] Subgraph isomorphism
-* [ ] Motif detection
+* [x] Python bindings (`pyvq`) via Maturin
+* [ ] C bindings
+* [ ] Node.js bindings
 
-### 6. Approximation Algorithms
+### 6. Tools & Binaries
 
-* [x] Maximum clique approximation
-* [x] Maximum independent set approximation
-* [x] Minimum vertex cover approximation
-* [x] Traveling salesman approximation
-* [ ] Graph coloring approximation
+* [x] `eval` tool for algorithm comparison
+* [x] `vq-examples` binary
+* [ ] CLI for direct file quantization
+* [ ] Benchmark suite (internal `cargo bench`)
 
-### 7. Parallel Algorithms
+### 7. Documentation & Testing
 
-* [x] Parallel PageRank
-* [x] Parallel BFS
-* [x] Parallel shortest paths
-* [x] Parallel connected components
-* [x] Parallel clustering coefficients
-* [x] Parallel triangle counting
-
-### 8. Graph Generators
-
-* [x] Erdős-Rényi random graphs
-* [x] Barabási-Albert scale-free graphs
-* [x] Watts-Strogatz small-world graphs
-* [ ] Random regular graphs
-* [ ] Stochastic block models
-
-### 9. Minimum Spanning Tree
-
-* [x] Kruskal's algorithm
-* [ ] Prim's algorithm
-
-### 10. Link Prediction
-
-* [x] Jaccard coefficient
-* [x] Adamic-Adar index
-* [x] Preferential attachment
-* [x] Resource allocation
-* [x] Common neighbors
-* [ ] Katz similarity
-
-### 11. Documentation and Testing
-
-* [x] SQL function reference
-* [x] User guide documentation
-* [x] SQL integration tests
 * [x] Rust unit tests
-* [ ] Performance benchmarks
-* [ ] Example notebooks
+* [x] Integration tests
+* [x] Documentation examples
+* [x] Code coverage setup
+* [ ] Performance benchmarks report
+* [ ] Python API documentation
