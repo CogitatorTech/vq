@@ -13,3 +13,6 @@ pub use core::distance::Distance;
 pub use core::error::{VqError, VqResult};
 pub use core::quantizer::Quantizer;
 pub use core::vector::Vector;
+
+#[cfg(feature = "simd")]
+pub use core::hsdlib_ffi::get_simd_backend;

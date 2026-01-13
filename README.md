@@ -25,12 +25,12 @@ search in large datasets.
 
 ### Quantization Algorithms
 
-| Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type       | Output Type |
-|-----------------------------------------------------|---------------------|-------------------------|----------------------|------------------|-------------|
-| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`         | `Vector<u8>`|
-| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`         | `Vector<u8>`|
-| [PQ](https://ieeexplore.ieee.org/document/5432202)  | $O(nkd)$            | $O(nd)$                 | Euclidean and Cosine | `&Vector<f32>`   | `Vector<f16>`|
-| [TSVQ](https://ieeexplore.ieee.org/document/515493) | $O(n \log k)$       | $O(d \log k)$           | Euclidean            | `&Vector<f32>`   | `Vector<f16>`|
+| Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type     | Output Type   |
+|-----------------------------------------------------|---------------------|-------------------------|----------------------|----------------|---------------|
+| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`       | `Vector<u8>`  |
+| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`       | `Vector<u8>`  |
+| [PQ](https://ieeexplore.ieee.org/document/5432202)  | $O(nkd)$            | $O(nd)$                 | Euclidean and Cosine | `&Vector<f32>` | `Vector<f16>` |
+| [TSVQ](https://ieeexplore.ieee.org/document/515493) | $O(n \log k)$       | $O(d \log k)$           | Euclidean            | `&Vector<f32>` | `Vector<f16>` |
 
 - $n$: number of vectors
 - $d$: dimensionality of vectors

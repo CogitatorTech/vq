@@ -1,5 +1,8 @@
 use crate::core::error::{VqError, VqResult};
 
+#[cfg(feature = "simd")]
+use crate::core::hsdlib_ffi;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Distance {
     SquaredEuclidean,
@@ -22,7 +25,7 @@ impl Distance {
             Distance::SquaredEuclidean => compute_squared_euclidean(a, b),
             Distance::Euclidean => compute_squared_euclidean(a, b).sqrt(),
             Distance::Manhattan => compute_manhattan(a, b),
-            Distance::CosineDistance => compute_cosine(a, b),
+            Distance::CosineDistance => compute_cosine_distance(a, b),
         };
 
         Ok(result)
@@ -31,6 +34,13 @@ impl Distance {
 
 #[inline]
 fn compute_squared_euclidean(a: &[f32], b: &[f32]) -> f32 {
+    #[cfg(feature = "simd")]
+    {
+        if let Some(result) = hsdlib_ffi::sqeuclidean_f32(a, b) {
+            return result;
+        }
+    }
+    // Fallback to scalar implementation
     a.iter()
         .zip(b.iter())
         .map(|(&x, &y)| {
@@ -42,11 +52,26 @@ fn compute_squared_euclidean(a: &[f32], b: &[f32]) -> f32 {
 
 #[inline]
 fn compute_manhattan(a: &[f32], b: &[f32]) -> f32 {
+    #[cfg(feature = "simd")]
+    {
+        if let Some(result) = hsdlib_ffi::manhattan_f32(a, b) {
+            return result;
+        }
+    }
+    // Fallback to scalar implementation
     a.iter().zip(b.iter()).map(|(&x, &y)| (x - y).abs()).sum()
 }
 
 #[inline]
-fn compute_cosine(a: &[f32], b: &[f32]) -> f32 {
+fn compute_cosine_distance(a: &[f32], b: &[f32]) -> f32 {
+    #[cfg(feature = "simd")]
+    {
+        // hsdlib returns cosine similarity, we need cosine distance (1 - similarity)
+        if let Some(similarity) = hsdlib_ffi::cosine_f32(a, b) {
+            return 1.0 - similarity;
+        }
+    }
+    // Fallback to scalar implementation
     let dot: f32 = a.iter().zip(b.iter()).map(|(&x, &y)| x * y).sum();
     let norm_a = a.iter().map(|&x| x * x).sum::<f32>().sqrt();
     let norm_b = b.iter().map(|&x| x * x).sum::<f32>().sqrt();

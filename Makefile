@@ -73,6 +73,11 @@ clean: ## Remove generated and temporary files
 	@rm -f $(PYVQ_DIR)/*.so
 	@rm -f benchmark_results.csv eval_*.csv
 
+.PHONY: submodule-init
+submodule-init: ## Initialize git submodules (required for simd feature)
+	@echo "Initializing git submodules..."
+	@git submodule update --init --recursive
+
 .PHONY: install-snap
 install-snap: ## Install dependencies using Snapcraft
 	@echo "Installing snap dependencies..."

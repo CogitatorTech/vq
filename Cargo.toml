@@ -17,6 +17,9 @@ resolver = "2"
 
 include = [
     "src/*",
+    "build.rs",
+    "external/hsdlib/include/*",
+    "external/hsdlib/src/**/*.c",
     "Cargo.toml",
     "README.md",
     "LICENSE-MIT",
@@ -31,7 +34,8 @@ path = "src/lib.rs"
 default = []
 binaries = []
 parallel = ["rayon"]
-all = ["binaries", "parallel"]
+simd = []
+all = ["binaries", "parallel", "simd"]
 
 [[bin]]
 name = "eval"
@@ -52,6 +56,9 @@ serde = { version = "1.0.217", features = ["derive"] }
 clap = { version = "4.5.29", features = ["derive"] }
 thiserror = "2"
 rayon = { version = "1.10", optional = true }
+
+[build-dependencies]
+cc = "1.0"
 
 [profile.release]
 strip = "symbols"
