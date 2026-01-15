@@ -27,10 +27,11 @@ def test_quantize_single_value(scalar_quantizer):
     """Test quantization of a single value."""
     # For x = -0.8:
     #   (x - min)/step = (-0.8 - (-1.0)) / 0.5 = 0.2/0.5 = 0.4, which rounds to 0.
-    result_bytes = scalar_quantizer.quantize([-0.8])
-    result_array = np.frombuffer(result_bytes, dtype=np.uint8)
-    expected = np.array([0], dtype=np.uint8)
-    np.testing.assert_array_equal(result_array, expected)
+    data = np.array([-0.8], dtype=np.float32)
+    result = scalar_quantizer.quantize(data)
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.uint8
+    np.testing.assert_array_equal(result, np.array([0], dtype=np.uint8))
 
 
 def test_quantize_multiple_values(scalar_quantizer):
@@ -46,29 +47,50 @@ def test_quantize_multiple_values(scalar_quantizer):
     #  -  0.6 -> ((0.6 - (-1.0))=1.6/0.5=3.2 rounds to 3).
     #  -  1.0 -> index 4.
     #  -  1.2 clamps to 1.0 -> index 4.
-    result_bytes = scalar_quantizer.quantize([-1.2, -1.0, -0.8, -0.3, 0.0, 0.3, 0.6, 1.0, 1.2])
-    result_array = np.frombuffer(result_bytes, dtype=np.uint8)
-    expected = np.array([0, 0, 0, 1, 2, 3, 3, 4, 4], dtype=np.uint8)
-    np.testing.assert_array_equal(result_array, expected)
+    data = np.array([-1.2, -1.0, -0.8, -0.3, 0.0, 0.3, 0.6, 1.0, 1.2], dtype=np.float32)
+    result = scalar_quantizer.quantize(data)
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.uint8
+    np.testing.assert_array_equal(result, np.array([0, 0, 0, 1, 2, 3, 3, 4, 4], dtype=np.uint8))
 
 
-def test_quantize_empty_list(scalar_quantizer):
-    """Test quantization of an empty list."""
-    result_bytes = scalar_quantizer.quantize([])
-    result_array = np.frombuffer(result_bytes, dtype=np.uint8)
-    expected = np.array([], dtype=np.uint8)
-    np.testing.assert_array_equal(result_array, expected)
+def test_quantize_empty_array(scalar_quantizer):
+    """Test quantization of an empty array."""
+    data = np.array([], dtype=np.float32)
+    result = scalar_quantizer.quantize(data)
+    assert isinstance(result, np.ndarray)
+    assert len(result) == 0
 
 
 def test_quantize_values_outside_range(scalar_quantizer):
     """Test quantization of values far outside the range."""
-    # For input [-100.0, 100.0]:
-    #  - -100.0 clamps to -1.0 -> index 0.
-    #  - 100.0 clamps to 1.0 -> index 4.
-    result_bytes = scalar_quantizer.quantize([-100.0, 100.0])
-    result_array = np.frombuffer(result_bytes, dtype=np.uint8)
-    expected = np.array([0, 4], dtype=np.uint8)
-    np.testing.assert_array_equal(result_array, expected)
+    data = np.array([-100.0, 100.0], dtype=np.float32)
+    result = scalar_quantizer.quantize(data)
+    np.testing.assert_array_equal(result, np.array([0, 4], dtype=np.uint8))
+
+
+def test_dequantize(scalar_quantizer):
+    """Test dequantization."""
+    codes = np.array([0, 2, 4], dtype=np.uint8)
+    result = scalar_quantizer.dequantize(codes)
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.float32
+    np.testing.assert_array_almost_equal(result, np.array([-1.0, 0.0, 1.0], dtype=np.float32))
+
+
+def test_properties():
+    """Test ScalarQuantizer properties."""
+    sq = pyvq.ScalarQuantizer(-1.0, 1.0, 5)
+    assert sq.min == -1.0
+    assert sq.max == 1.0
+    assert sq.levels == 5
+    assert sq.step == 0.5
+
+
+def test_repr():
+    """Test __repr__."""
+    sq = pyvq.ScalarQuantizer(-1.0, 1.0, 256)
+    assert "ScalarQuantizer" in repr(sq)
 
 
 if __name__ == "__main__":
