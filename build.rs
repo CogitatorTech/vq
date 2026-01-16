@@ -19,6 +19,14 @@ fn main() {
         // Architecture-specific SIMD flags
         let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
 
+        // Set C standard to C11 (this is needed for building Hsdlib)
+        if std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default() == "msvc" {
+            build.flag("/std:c11");
+            build.flag("/TC");
+        } else {
+            build.flag_if_supported("-std=c11");
+        }
+
         match target_arch.as_str() {
             "x86_64" | "x86" => {
                 // Enable AVX/AVX2/FMA for Intel/AMD
@@ -29,6 +37,8 @@ fn main() {
             "aarch64" => {
                 // ARM64 has NEON by default, but enable it explicitly
                 build.flag_if_supported("-march=armv8-a");
+                // Define HWCAP_SVE for older kernels/headers (e.g. manylinux_2_24)
+                build.flag_if_supported("-DHWCAP_SVE=(1<<22)");
             }
             "arm" => {
                 // ARM32 NEON
