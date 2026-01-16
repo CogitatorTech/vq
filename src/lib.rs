@@ -11,7 +11,7 @@
 //! - **Unified API**: All algorithms implement the [`Quantizer`] trait.
 //! - **Distance Metrics**: Supports Euclidean, Squared Euclidean, Manhattan, and Cosine distance.
 //! - **Performance**:
-//!   - SIMD acceleration (AVX/AVX2/AVX512/NEON) via `simd` feature.
+//!   - SIMD acceleration (AVX/AVX2/AVX512/NEON/SVE) via `simd` feature.
 //!   - Parallel training via `parallel` feature.
 //!
 //! ## Example

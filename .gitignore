@@ -84,3 +84,4 @@ eval_*.csv
 pyvq/target
 pyvq/wheels
 .env
+.benchmarks/

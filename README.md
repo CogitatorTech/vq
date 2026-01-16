@@ -19,7 +19,7 @@ It can be used for various applications such as image compression and nearest ne
 - A simple and generic API for all quantizers
 - Good performance via SIMD acceleration, multi-threading, and zero-copying
 - Support for multiple distances including Euclidean, cosine, and Manhattan distances
-- Python bindings via [PyVq](https://pypi.org/project/pyvq/) package.
+- Python bindings via [PyVq](https://pypi.org/project/pyvq/) package
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -27,14 +27,14 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 > Vq is in early development, so bugs and breaking changes are expected.
 > Please use the [issues page](https://github.com/CogitatorTech/vq/issues) to report bugs or request features.
 
-### Quantization Algorithms
+### Supported Algorithms
 
-| Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type     | Output Type   |
-|-----------------------------------------------------|---------------------|-------------------------|----------------------|----------------|---------------|
-| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`       | `Vec<u8>`     |
-| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`       | `Vec<u8>`     |
-| [PQ](src/pq.rs)                                     | $O(nkd)$            | $O(nd)$                 | All                  | `&[f32]`       | `Vec<f16>`    |
-| [TSVQ](src/tsvq.rs)                                 | $O(n \log k)$       | $O(d \log k)$           | All                  | `&[f32]`       | `Vec<f16>`    |
+| Algorithm           | Training Complexity | Quantization Complexity | Supported Distances | Input Type | Output Type | Compression |
+|---------------------|---------------------|-------------------------|---------------------|------------|-------------|-------------|
+| [BQ](src/bq.rs)     | $O(1)$              | $O(nd)$                 | —                   | `&[f32]`   | `Vec<u8>`   | 75%         |
+| [SQ](src/sq.rs)     | $O(1)$              | $O(nd)$                 | —                   | `&[f32]`   | `Vec<u8>`   | 75%         |
+| [PQ](src/pq.rs)     | $O(nkd)$            | $O(nd)$                 | All                 | `&[f32]`   | `Vec<f16>`  | 50%         |
+| [TSVQ](src/tsvq.rs) | $O(n \log k)$       | $O(d \log k)$           | All                 | `&[f32]`   | `Vec<f16>`  | 50%         |
 
 - $n$: number of vectors
 - $d$: dimensionality of vectors
@@ -53,19 +53,22 @@ cargo add vq
 ```
 
 To enable SIMD acceleration:
+
 ```bash
 cargo add vq --features simd
 ```
 
 > [!NOTE]
-> The `simd` feature needs a C11-compatible compiler (like GCC, Clang, or MSVC)
+> The `simd` feature needs a modern C compiler (like GCC, Clang, or MSVC) that supports C11 standard.
 
 To enable parallel training:
+
 ```bash
 cargo add vq --features parallel
 ```
 
 To enable all features:
+
 ```bash
 cargo add vq --features all
 ```
@@ -87,7 +90,7 @@ Check out the latest API documentation on [docs.rs](https://docs.rs/vq).
 
 #### Quick Example
 
-Here's a simple example using the SQ algorithm to quantize a vector:
+Here's a simple example using the BQ and SQ algorithms to quantize vectors:
 
 ```rust
 use vq::{BinaryQuantizer, ScalarQuantizer, Quantizer, VqResult};
