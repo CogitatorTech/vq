@@ -7,7 +7,7 @@
 use crate::core::distance::Distance;
 use crate::core::error::{VqError, VqResult};
 use crate::core::quantizer::Quantizer;
-use crate::core::vector::{mean_vector, Vector};
+use crate::core::vector::{Vector, mean_vector};
 use half::f16;
 
 struct TSVQNode {

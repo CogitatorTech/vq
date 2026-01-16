@@ -4,7 +4,7 @@
 [<img alt="code coverage" src="https://img.shields.io/codecov/c/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codecov" height="20">](https://codecov.io/gh/CogitatorTech/vq)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/vq.svg?label=crates.io&style=flat&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-vq-66c2a5?label=docs.rs&style=flat&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/vq)
-[<img alt="msrv" src="https://img.shields.io/badge/msrv-1.83.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.83.0)
+[<img alt="msrv" src="https://img.shields.io/badge/msrv-1.85.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.85.0)
 [<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/CogitatorTech/vq)
 
 Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
@@ -49,31 +49,15 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 Add `vq` to your `Cargo.toml`:
 
 ```bash
-cargo add vq
-```
-
-To enable SIMD acceleration:
-
-```bash
-cargo add vq --features simd
+cargo add vq --features parallel simd
 ```
 
 > [!NOTE]
-> The `simd` feature needs a modern C compiler (like GCC, Clang, or MSVC) that supports C11 standard.
+> The `parallel` and `simd` features enables multi-threading support and SIMD acceleration support for training phase of PQ and TSVQ algorithms.
+> This can significantly speed up training time, especially for large datasets.
+> Note that the `simd` feature needs a modern C compiler (like GCC, Clang, or MSVC) that supports C11 standard.
 
-To enable parallel training:
-
-```bash
-cargo add vq --features parallel
-```
-
-To enable all features:
-
-```bash
-cargo add vq --features all
-```
-
-*Vq requires Rust 1.83 or later.*
+*Vq requires Rust 1.85 or later.*
 
 ---
 

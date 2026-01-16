@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use rand::rngs::StdRng;
 use rand::Rng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use vq::Vector;
 
 pub const SEED: u64 = 42;

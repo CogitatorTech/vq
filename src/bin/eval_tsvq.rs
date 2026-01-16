@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use half::f16;
 use std::time::Instant;
-use vq::{Distance, Quantizer, Vector, TSVQ};
+use vq::{Distance, Quantizer, TSVQ, Vector};
 
 #[derive(Parser)]
 #[command(name = "eval_tsvq")]

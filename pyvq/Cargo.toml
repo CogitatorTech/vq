@@ -1,7 +1,7 @@
 [package]
 name = "pyvq"
 version = "0.1.0-alpha.1"
-edition = "2021"
+edition = "2024"
 publish = false
 
 [lib]
@@ -14,9 +14,3 @@ vq = { path = ".." }
 pyo3 = { version = "0.24.1", features = ["abi3-py310", "extension-module", "auto-initialize"] }
 numpy = "0.24"
 half = "2.4"
-
-# Pin getrandom to avoid the wasip2 -> wit-bindgen dependency chain that requires Rust edition 2024
-[dependencies.getrandom]
-version = "=0.2.12"
-default-features = false
-features = ["std"]

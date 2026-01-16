@@ -18,7 +18,6 @@ It outlines features to be implemented and their current status.
 * [x] (Squared) Euclidean (L2) distance
 * [x] Manhattan (L1) distance
 * [x] Cosine distance
-* [ ] Hamming distance
 
 ### 3. Core Features
 

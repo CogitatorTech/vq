@@ -1,7 +1,7 @@
 mod common;
 
 use common::{generate_test_data, seeded_rng};
-use vq::{BinaryQuantizer, Distance, ProductQuantizer, Quantizer, ScalarQuantizer, VqError, TSVQ};
+use vq::{BinaryQuantizer, Distance, ProductQuantizer, Quantizer, ScalarQuantizer, TSVQ, VqError};
 
 // =============================================================================
 // Basic Quantization Tests

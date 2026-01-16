@@ -34,7 +34,7 @@ impl From<c_int> for HsdStatus {
     }
 }
 
-extern "C" {
+unsafe extern "C" {
     /// Compute squared Euclidean distance between two float vectors.
     pub fn hsd_dist_sqeuclidean_f32(
         a: *const f32,
