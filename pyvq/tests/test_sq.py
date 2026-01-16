@@ -93,5 +93,27 @@ def test_repr():
     assert "ScalarQuantizer" in repr(sq)
 
 
+def test_too_many_levels_rejected():
+    """Test that levels > 256 raises ValueError."""
+    with pytest.raises(ValueError):
+        pyvq.ScalarQuantizer(-1.0, 1.0, 257)
+
+
+def test_nan_min_max_rejected():
+    """Test that NaN min/max raises ValueError."""
+    with pytest.raises(ValueError):
+        pyvq.ScalarQuantizer(float('nan'), 1.0, 256)
+    with pytest.raises(ValueError):
+        pyvq.ScalarQuantizer(-1.0, float('nan'), 256)
+
+
+def test_infinity_rejected():
+    """Test that Infinity min/max raises ValueError."""
+    with pytest.raises(ValueError):
+        pyvq.ScalarQuantizer(float('-inf'), 1.0, 256)
+    with pytest.raises(ValueError):
+        pyvq.ScalarQuantizer(-1.0, float('inf'), 256)
+
+
 if __name__ == "__main__":
     pytest.main()

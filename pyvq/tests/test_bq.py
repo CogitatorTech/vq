@@ -74,5 +74,12 @@ def test_invalid_parameters():
         pyvq.BinaryQuantizer(0.5, 6, 5)  # low > high
 
 
+def test_nan_threshold_rejected():
+    """Test that NaN threshold raises ValueError."""
+    import math
+    with pytest.raises(ValueError):
+        pyvq.BinaryQuantizer(float('nan'), 0, 1)
+
+
 if __name__ == "__main__":
     pytest.main()

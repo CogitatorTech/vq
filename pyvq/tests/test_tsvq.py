@@ -86,5 +86,15 @@ def test_tsvq_reconstruction_quality():
     assert dist_to_origin < dist_to_ten
 
 
+def test_dimension_mismatch():
+    """Test that quantizing wrong dimension vector raises ValueError."""
+    training = np.random.rand(50, 8).astype(np.float32)
+    tsvq = pyvq.TSVQ(training, max_depth=3)
+    
+    wrong_dim_vector = np.random.rand(10).astype(np.float32)  # dim 10 != 8
+    with pytest.raises(ValueError, match="Dimension mismatch"):
+        tsvq.quantize(wrong_dim_vector)
+
+
 if __name__ == "__main__":
     pytest.main()
