@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 doc = false
 
 [dependencies]
-vq = { path = ".." }
+vq = { path = "..", features = ["simd", "parallel"] }
 pyo3 = { version = "0.24.1", features = ["abi3-py310", "extension-module", "auto-initialize"] }
 numpy = "0.24"
 half = "2.4"

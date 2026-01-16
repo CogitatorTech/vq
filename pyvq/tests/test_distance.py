@@ -101,5 +101,15 @@ def test_distance_string_constructor():
     assert np.isclose(manh.compute(a, b), 4.0, rtol=1e-4)
 
 
+def test_get_simd_backend():
+    """Test get_simd_backend function."""
+    backend = pyvq.get_simd_backend()
+    assert isinstance(backend, str)
+    assert len(backend) > 0
+    # Backend should contain one of these keywords
+    assert any(kw in backend for kw in ["Auto", "Scalar", "AVX", "NEON", "SVE", "Forced"])
+
+
 if __name__ == "__main__":
     pytest.main()
+
