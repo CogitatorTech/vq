@@ -1,0 +1,114 @@
+name: Publish pyvq to PyPI
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x86_64 - use manylinux Docker (NOT zig) for SIMD support
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            manylinux: "2_17"
+          # Linux aarch64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            manylinux: "2_17"
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-14
+            target: aarch64-apple-darwin
+            manylinux: null
+          # macOS x86_64 (Intel)
+          - os: macos-13
+            target: x86_64-apple-darwin
+            manylinux: null
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            manylinux: null
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set Up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install maturin
+        run: pip install maturin
+
+      # Linux builds use manylinux Docker images (NOT zig) for SIMD compatibility
+      - name: Build wheel (Linux manylinux)
+        if: runner.os == 'Linux'
+        run: |
+          cd pyvq
+          maturin build --release --out dist --target ${{ matrix.target }} --manylinux ${{ matrix.manylinux }}
+
+      # macOS and Windows build natively
+      - name: Build wheel (macOS/Windows)
+        if: runner.os != 'Linux'
+        run: |
+          cd pyvq
+          maturin build --release --out dist --target ${{ matrix.target }}
+        shell: bash
+
+      - name: Upload wheels as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.target }}
+          path: pyvq/dist/
+
+  publish_to_pypi:
+    name: Publish to PyPI
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install twine
+        run: pip install twine
+
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: wheels
+          merge-multiple: true
+
+      - name: Verify wheels
+        run: |
+          ls -la wheels/
+          twine check wheels/*
+
+      - name: Publish wheels to PyPI
+        run: |
+          twine upload wheels/* -u __token__ -p ${{ secrets.PYPI_API_TOKEN }}
+        if: success()

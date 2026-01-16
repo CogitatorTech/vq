@@ -11,7 +11,7 @@ PYVQ_DIR        := pyvq
 PY_DEP_MNGR     := uv # Use `uv sync --all-extras` to make the environment
 TEST_DATA_DIR   := tests/testdata
 SHELL           := /bin/bash
-MSRV            := 1.83
+MSRV            := 1.85
 
 # Pinned versions for Rust development tools
 TARPAULIN_VERSION=0.32.8
@@ -181,9 +181,9 @@ wheel: ## Build the wheel file for PyVq
 	@(cd $(PYVQ_DIR) && maturin build --release --out $(WHEEL_DIR) --auditwheel check)
 
 .PHONY: wheel-manylinux
-wheel-manylinux: ## Build the manylinux wheel file for PyVq (using Zig)
-	@echo "Building the manylinux PyVq wheel..."
-	@(cd $(PYVQ_DIR) && maturin build --release --out $(WHEEL_DIR) --auditwheel check --zig)
+wheel-manylinux: ## Build the wheel file for PyVq (use CI for true manylinux)
+	@echo "Building the PyVq wheel (local build, use CI for manylinux compliance)..."
+	@(cd $(PYVQ_DIR) && maturin build --release --out $(WHEEL_DIR))
 
 .PHONY: test-py
 test-py: develop-py ## Run Python tests

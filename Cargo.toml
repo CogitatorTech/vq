@@ -10,8 +10,8 @@ authors = ["Hassan Abedi <hassan.abedi.t@gmail.com>"]
 homepage = "https://github.com/CogitatorTech/vq"
 documentation = "https://docs.rs/vq"
 categories = ["algorithms", "compression", "data-structures"]
-edition = "2021"
-rust-version = "1.83"
+edition = "2024"
+rust-version = "1.85"
 
 resolver = "2"
 

@@ -2,30 +2,24 @@
 
 [<img alt="tests" src="https://img.shields.io/github/actions/workflow/status/CogitatorTech/vq/tests.yml?label=tests&style=flat&labelColor=555555&logo=github" height="20">](https://github.com/CogitatorTech/vq/actions/workflows/tests.yml)
 [<img alt="code coverage" src="https://img.shields.io/codecov/c/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codecov" height="20">](https://codecov.io/gh/CogitatorTech/vq)
-[<img alt="codefactor" src="https://img.shields.io/codefactor/grade/github/CogitatorTech/vq?style=flat&labelColor=555555&logo=codefactor" height="20">](https://www.codefactor.io/repository/github/CogitatorTech/vq)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/vq.svg?label=crates.io&style=flat&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/vq)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-vq-66c2a5?label=docs.rs&style=flat&labelColor=555555&logo=docs.rs" height="20">](https://docs.rs/vq)
-[<img alt="msrv" src="https://img.shields.io/badge/msrv-1.83.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.83.0)
+[<img alt="msrv" src="https://img.shields.io/badge/msrv-1.85.0-orange?label=msrv&style=flat&labelColor=555555&logo=rust" height="20">](https://github.com/rust-lang/rust/releases/tag/1.85.0)
 [<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=555555&logo=open-source-initiative" height="20">](https://github.com/CogitatorTech/vq)
 
 Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
-It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar
-quantization (SQ), product quantization (PQ), and tree-structured vector quantization (TSVQ).
+It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar quantization (SQ),
+product quantization (PQ), and tree-structured vector quantization (TSVQ).
 
-Vector quantization is a technique used in machine learning and data compression to reduce the size of high-dimensional
-vectors by approximating them with a smaller set of representative vectors.
-It can be used for various applications such as image compression and nearest neighbor search to speed up similarity
-search in large datasets.
+Vector quantization is a technique to reduce the size of high-dimensional vectors by approximating them with a smaller set of representative vectors.
+It can be used for various applications such as image compression and nearest neighbor search to speed up similarity search in large datasets.
 
 ### Features
 
-- A simple and generic API for all quantization algorithms
-- Good performance:
-    - SIMD Acceleration: AVX/AVX2/AVX512 for Intel and AMD, NEON for ARM CPUs (via `simd` feature)
-    - Parallel Training: Multi-threaded training using Rayon (via `parallel` feature)
-    - Zero-copying: Optimized memory usage during training
-- Flexible: Supports multiple distance metrics (Euclidean, cosine, and Manhattan distances)
-- Robust: All operations return `Result` for proper error handling
+- A simple and generic API for all quantizers
+- Good performance via SIMD acceleration, multi-threading, and zero-copying
+- Support for multiple distances including Euclidean, cosine, and Manhattan distances
+- Python bindings via [PyVq](https://pypi.org/project/pyvq/) package
 
 See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -33,14 +27,14 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 > Vq is in early development, so bugs and breaking changes are expected.
 > Please use the [issues page](https://github.com/CogitatorTech/vq/issues) to report bugs or request features.
 
-### Quantization Algorithms
+### Supported Algorithms
 
-| Algorithm                                           | Training Complexity | Quantization Complexity | Supported Distances  | Input Type     | Output Type   |
-|-----------------------------------------------------|---------------------|-------------------------|----------------------|----------------|---------------|
-| [BQ](src/bq.rs)                                     | $O(1)$              | $O(nd)$                 | Cosine               | `&[f32]`       | `Vec<u8>`     |
-| [SQ](src/sq.rs)                                     | $O(1)$              | $O(nd)$                 | Euclidean            | `&[f32]`       | `Vec<u8>`     |
-| [PQ](src/pq.rs)                                     | $O(nkd)$            | $O(nd)$                 | All                  | `&[f32]`       | `Vec<f16>`    |
-| [TSVQ](src/tsvq.rs)                                 | $O(n \log k)$       | $O(d \log k)$           | All                  | `&[f32]`       | `Vec<f16>`    |
+| Algorithm           | Training Complexity | Quantization Complexity | Supported Distances | Input Type | Output Type | Compression |
+|---------------------|---------------------|-------------------------|---------------------|------------|-------------|-------------|
+| [BQ](src/bq.rs)     | $O(1)$              | $O(nd)$                 | —                   | `&[f32]`   | `Vec<u8>`   | 75%         |
+| [SQ](src/sq.rs)     | $O(1)$              | $O(nd)$                 | —                   | `&[f32]`   | `Vec<u8>`   | 75%         |
+| [PQ](src/pq.rs)     | $O(nkd)$            | $O(nd)$                 | All                 | `&[f32]`   | `Vec<f16>`  | 50%         |
+| [TSVQ](src/tsvq.rs) | $O(n \log k)$       | $O(d \log k)$           | All                 | `&[f32]`   | `Vec<f16>`  | 50%         |
 
 - $n$: number of vectors
 - $d$: dimensionality of vectors
@@ -55,34 +49,22 @@ See [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 Add `vq` to your `Cargo.toml`:
 
 ```bash
-cargo add vq
-```
-
-To enable SIMD acceleration:
-```bash
-cargo add vq --features simd
+cargo add vq --features parallel simd
 ```
 
 > [!NOTE]
-> The `simd` feature requires:
-> - A C11-compatible compiler (`gcc`, `clang`, or MSVC)
-> - Git submodules initialized: `git submodule update --init --recursive`
+> The `parallel` and `simd` features enables multi-threading support and SIMD acceleration support for training phase of PQ and TSVQ algorithms.
+> This can significantly speed up training time, especially for large datasets.
+> Note that the `simd` feature needs a modern C compiler (like GCC, Clang, or MSVC) that supports C11 standard.
 
-To enable parallel training:
-```bash
-cargo add vq --features parallel
-```
+*Vq requires Rust 1.85 or later.*
 
-To enable all features:
-```bash
-cargo add vq --features all
-```
+---
 
-*Vq requires Rust 1.83 or later.*
+### Python Bindings
 
-#### Python Bindings
-
-Check out the [pyvq](pyvq) directory for Python bindings for Vq.
+Vq can be used from Python via PyVq Python package.
+Check out the [pyvq](pyvq) directory for PyVq source code.
 
 ---
 
@@ -92,7 +74,7 @@ Check out the latest API documentation on [docs.rs](https://docs.rs/vq).
 
 #### Quick Example
 
-Here's a simple example using the SQ algorithm to quantize a vector:
+Here's a simple example using the BQ and SQ algorithms to quantize vectors:
 
 ```rust
 use vq::{BinaryQuantizer, ScalarQuantizer, Quantizer, VqResult};
@@ -154,4 +136,4 @@ Vq is available under either of the following licenses:
 
 ### Acknowledgements
 
-* This project uses [Hsdlib](https://github.com/habedi/hsdlib) C library for SIMD acceleration.
+* This project uses [Hsdlib](https://github.com/habedi/hsdlib) library for SIMD acceleration.

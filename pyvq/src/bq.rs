@@ -1,11 +1,17 @@
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use vq::bq::BinaryQuantizer as VqBinaryQuantizer;
-use vq::vector::Vector;
+use vq::Quantizer;
 
-/// A Python binding for the BinaryQuantizer.
+/// Binary quantizer that maps values to 0 or 1 based on a threshold.
 ///
-/// This class maps floating-point values to one of two discrete levels
-/// based on a threshold.
+/// Example:
+///     >>> import numpy as np
+///     >>> bq = pyvq.BinaryQuantizer(threshold=0.5, low=0, high=1)
+///     >>> data = np.array([0.3, 0.7, 0.5], dtype=np.float32)
+///     >>> codes = bq.quantize(data)  # Returns np.array([0, 1, 1], dtype=np.uint8)
+///     >>> reconstructed = bq.dequantize(codes)  # Returns np.array([0.0, 1.0, 1.0], dtype=np.float32)
 #[pyclass]
 pub struct BinaryQuantizer {
     quantizer: VqBinaryQuantizer,
@@ -15,30 +21,85 @@ pub struct BinaryQuantizer {
 impl BinaryQuantizer {
     /// Create a new BinaryQuantizer.
     ///
-    /// Parameters:
-    /// - threshold (float): The threshold value for quantization.
-    /// - low (int): The quantized value for inputs below the threshold.
-    /// - high (int): The quantized value for inputs at or above the threshold.
+    /// Args:
+    ///     threshold: Values >= threshold map to high, values < threshold map to low.
+    ///     low: The output value for inputs below the threshold (0-255).
+    ///     high: The output value for inputs at or above the threshold (0-255).
     ///
-    /// Panics if `low` is not less than `high`.
+    /// Raises:
+    ///     ValueError: If low >= high or threshold is NaN.
     #[new]
+    #[pyo3(signature = (threshold, low=0, high=1))]
     fn new(threshold: f32, low: u8, high: u8) -> PyResult<Self> {
-        // VqBinaryQuantizer::fit will panic if parameters are invalid.
-        Ok(BinaryQuantizer {
-            quantizer: VqBinaryQuantizer::new(threshold, low, high),
-        })
+        VqBinaryQuantizer::new(threshold, low, high)
+            .map(|q| BinaryQuantizer { quantizer: q })
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
-    /// Quantize a list of floats.
+    /// Quantize a numpy array of floats to binary values.
     ///
-    /// Parameters:
-    /// - v (List[float]): A list of floating-point values.
+    /// Args:
+    ///     values: numpy array of floating-point values (float32).
     ///
     /// Returns:
-    /// - List[int]: The quantized values.
-    fn quantize(&self, v: Vec<f32>) -> PyResult<Vec<u8>> {
-        // Convert the input Vec<f32> into a slice and pass it to the quantizer.
-        let result: Vector<u8> = self.quantizer.quantize(&v);
-        Ok(result.data)
+    ///     numpy array of quantized values (uint8).
+    fn quantize<'py>(
+        &self,
+        py: Python<'py>,
+        values: PyReadonlyArray1<f32>,
+    ) -> PyResult<Bound<'py, PyArray1<u8>>> {
+        let input = values.as_slice()?;
+        let result = self
+            .quantizer
+            .quantize(input)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(result.into_pyarray(py))
+    }
+
+    /// Reconstruct approximate float values from quantized data.
+    ///
+    /// Args:
+    ///     codes: numpy array of quantized values (uint8).
+    ///
+    /// Returns:
+    ///     numpy array of reconstructed float values (float32).
+    fn dequantize<'py>(
+        &self,
+        py: Python<'py>,
+        codes: PyReadonlyArray1<u8>,
+    ) -> PyResult<Bound<'py, PyArray1<f32>>> {
+        let input = codes.as_slice()?.to_vec();
+        let result = self
+            .quantizer
+            .dequantize(&input)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(result.into_pyarray(py))
+    }
+
+    /// The threshold value.
+    #[getter]
+    fn threshold(&self) -> f32 {
+        self.quantizer.threshold()
+    }
+
+    /// The low quantization level.
+    #[getter]
+    fn low(&self) -> u8 {
+        self.quantizer.low()
+    }
+
+    /// The high quantization level.
+    #[getter]
+    fn high(&self) -> u8 {
+        self.quantizer.high()
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "BinaryQuantizer(threshold={}, low={}, high={})",
+            self.quantizer.threshold(),
+            self.quantizer.low(),
+            self.quantizer.high()
+        )
     }
 }
