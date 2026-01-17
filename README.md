@@ -150,6 +150,24 @@ fn main() -> VqResult<()> {
 }
 ```
 
+### Benchmarks
+
+You could follow the instructions below to run the benchmarks locally your machine.
+
+```bash
+git clone --recursive https://github.com/CogitatorTech/vq.git
+cd vq
+```
+
+```bash
+make eval-all
+```
+
+> [!NOTE]
+> To run the benchmarks, you need to have GNU Make installed.
+> The `make eval-all` command will run each quanttizer on a set of high-dimensional synthetic data and report runtime (second) and recunstruction
+> error (RME).
+
 ---
 
 ### Contributing
