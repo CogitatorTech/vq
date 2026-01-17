@@ -2,10 +2,10 @@
 
 [![Python version](https://img.shields.io/badge/python-%3E=3.10-3776ab?style=flat&labelColor=282c34&logo=python)](https://github.com/CogitatorTech/vq)
 [![PyPI version](https://img.shields.io/pypi/v/pyvq?style=flat&labelColor=282c34&color=3775a9&logo=pypi)](https://badge.fury.io/py/pyvq)
-[![Documentation](https://img.shields.io/badge/docs-read-00acc1?style=flat&labelColor=282c34&logo=readthedocs)](https://CogitatorTech.github.io/CogitatorTech/python)
+[![Documentation](https://img.shields.io/badge/docs-read-00acc1?style=flat&labelColor=282c34&logo=readthedocs)](https://CogitatorTech.github.io/vq/python)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0288d1?style=flat&labelColor=282c34&logo=open-source-initiative)](LICENSE)
 
-PyVq provides Python bindings for [Vq](https://github.com/CogitatorTech/vq).
+PyVq provides Python bindings for [Vq](https://github.com/CogitatorTech/vq) vector quantization library.
 
 > [!IMPORTANT]
 > PyVq is in early development, so breaking changes and bugs are expected.
@@ -20,30 +20,26 @@ pip install pyvq
 ### Quickstart
 
 ```python
-import pygraphina as pg
+import numpy as np
+import pyvq
 
-# Create a graph
-g = pg.PyGraph()
-a, b, c = [g.add_node(i) for i in range(3)]
-g.add_edge(a, b, 1.0)
-g.add_edge(b, c, 1.0)
+# Binary Quantization
+bq = pyvq.BinaryQuantizer(threshold=0.0, low=0, high=1)
+vector = np.array([-0.5, 0.0, 0.5, 1.0], dtype=np.float32)
+codes = bq.quantize(vector)
+print(f"Binary codes: {codes}")  # [0, 1, 1, 1]
 
-# Calculate PageRank
-pr = pg.centrality.pagerank(g, 0.85, 100, 1e-6)
+# Scalar Quantization  
+sq = pyvq.ScalarQuantizer(min_val=-1.0, max_val=1.0, levels=256)
+quantized = sq.quantize(vector)
+reconstructed = sq.dequantize(quantized)
+print(f"Reconstructed: {reconstructed}")
 
-# Find largest clique size
-size = pg.approximation.large_clique_size(g)
-
-# Find connected components
-comps = pg.community.connected_components(g)
-
-# Compute Jaccard coefficients
-jc = pg.links.jaccard_coefficient(g)
-
-print(f"PageRank: {pr}")
-print(f"Clique size: {size}")
-print(f"Connected components: {comps}")
-print(f"Jaccard coefficients: {jc}")
+# Distance Computation
+dist = pyvq.Distance.euclidean()
+a = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+b = np.array([4.0, 5.0, 6.0], dtype=np.float32)
+print(f"Distance: {dist.compute(a, b)}")
 ```
 
 ### Documentation
