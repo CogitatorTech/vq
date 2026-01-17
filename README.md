@@ -9,7 +9,7 @@
 
 ---
 
-Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust 🦀.
+Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
 It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar quantization (SQ),
 product quantization (PQ), and tree-structured vector quantization (TSVQ).
 
