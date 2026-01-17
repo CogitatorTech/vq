@@ -1212,12 +1212,13 @@
 
 
 <h1 id="vq">Vq<a class="headerlink" href="#vq" title="Permanent link">&para;</a></h1>
-<p>Vq (<strong>v</strong>ector <strong>q</strong>uantizer) is a vector quantization library for Rust. It provides efficient implementations of popular quantization algorithms for compressing high-dimensional vectors.</p>
+<p>Vq (<strong>v</strong>ector <strong>q</strong>uantizer) is a vector quantization library for Rust.
+It provides efficient implementations of popular quantization algorithms for compressing high-dimensional vectors.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Simple and generic API via the <code>Quantizer</code> trait</li>
-<li>Up to 75% storage reduction</li>
-<li>SIMD acceleration (AVX/AVX2/AVX512/NEON/SVE) via the <code>simd</code> feature</li>
+<li>Morer than 50% reduction in storage size of input vectors</li>
+<li>SIMD acceleration support (AVX/AVX2/AVX512/NEON/SVE) via the <code>simd</code> feature</li>
 <li>Multi-threaded training via the <code>parallel</code> feature</li>
 <li>Multiple distance metrics: Euclidean, Manhattan, Cosine</li>
 </ul>
