@@ -1,16 +1,54 @@
 ## PyVq
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python version](https://img.shields.io/badge/Python-%3E=3.10-blue)](https://github.com/CogitatorTech/vq)
-[![PyPI version](https://badge.fury.io/py/pyvq.svg)](https://badge.fury.io/py/pyvq)
+[![Python version](https://img.shields.io/badge/python-%3E=3.10-3776ab?style=flat&labelColor=282c34&logo=python)](https://github.com/CogitatorTech/vq)
+[![PyPI version](https://img.shields.io/pypi/v/pyvq?style=flat&labelColor=282c34&color=3775a9&logo=pypi)](https://badge.fury.io/py/pyvq)
+[![Documentation](https://img.shields.io/badge/docs-read-00acc1?style=flat&labelColor=282c34&logo=readthedocs)](https://CogitatorTech.github.io/CogitatorTech/python)
+[![License: MIT](https://img.shields.io/badge/license-MIT-0288d1?style=flat&labelColor=282c34&logo=open-source-initiative)](LICENSE)
 
-PyVq library allows users to use [Vq](https://github.com/CogitatorTech/vq) in Python.
+PyVq provides Python bindings for [Vq](https://github.com/CogitatorTech/vq).
+
+> [!IMPORTANT]
+> PyVq is in early development, so breaking changes and bugs are expected.
+> Please report bugs on [GitHub issues](https://github.com/CogitatorTech/vq/issues).
 
 ### Installation
 
 ```bash
 pip install pyvq
 ```
+
+### Quickstart
+
+```python
+import pygraphina as pg
+
+# Create a graph
+g = pg.PyGraph()
+a, b, c = [g.add_node(i) for i in range(3)]
+g.add_edge(a, b, 1.0)
+g.add_edge(b, c, 1.0)
+
+# Calculate PageRank
+pr = pg.centrality.pagerank(g, 0.85, 100, 1e-6)
+
+# Find largest clique size
+size = pg.approximation.large_clique_size(g)
+
+# Find connected components
+comps = pg.community.connected_components(g)
+
+# Compute Jaccard coefficients
+jc = pg.links.jaccard_coefficient(g)
+
+print(f"PageRank: {pr}")
+print(f"Clique size: {size}")
+print(f"Connected components: {comps}")
+print(f"Jaccard coefficients: {jc}")
+```
+
+### Documentation
+
+Visit PyVq's [documentation page](https://CogitatorTech.github.io/vq/python) for detailed information including examples and API references.
 
 ### License
 
