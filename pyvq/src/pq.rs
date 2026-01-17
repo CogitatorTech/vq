@@ -23,7 +23,7 @@ use crate::distance::Distance;
 ///     ...     distance=pyvq.Distance.euclidean(),
 ///     ...     seed=42
 ///     ... )
-///     >>> codes = pq.quantize(training[0])
+///     >>> codes = pq.quantize(training[0])  # Returns float16 array
 ///     >>> reconstructed = pq.dequantize(codes)
 #[pyclass]
 pub struct ProductQuantizer {
@@ -92,18 +92,16 @@ impl ProductQuantizer {
     ///     vector: Input vector as numpy array (float32).
     ///
     /// Returns:
-    ///     Quantized representation as numpy array (float16 stored as u16 bits).
-    ///     Use `.view(np.float16)` to interpret as float16.
+    ///     Quantized representation as numpy array (float16).
     fn quantize<'py>(
         &self,
         py: Python<'py>,
         vector: PyReadonlyArray1<f32>,
-    ) -> PyResult<Bound<'py, PyArray1<u16>>> {
+    ) -> PyResult<Bound<'py, PyArray1<f16>>> {
         let input = vector.as_slice()?;
-        let result: Vec<u16> = self
+        let result = self
             .quantizer
             .quantize(input)
-            .map(|codes| codes.iter().map(|c| c.to_bits()).collect())
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(result.into_pyarray(py))
     }
@@ -111,20 +109,16 @@ impl ProductQuantizer {
     /// Reconstruct a vector from its quantized representation.
     ///
     /// Args:
-    ///     codes: Quantized representation as numpy array (float16 as u16 bits or via `.view(np.uint16)`).
+    ///     codes: Quantized representation as numpy array (float16).
     ///
     /// Returns:
     ///     Reconstructed vector as numpy array (float32).
     fn dequantize<'py>(
         &self,
         py: Python<'py>,
-        codes: PyReadonlyArray1<u16>,
+        codes: PyReadonlyArray1<f16>,
     ) -> PyResult<Bound<'py, PyArray1<f32>>> {
-        let input: Vec<f16> = codes
-            .as_slice()?
-            .iter()
-            .map(|&bits| f16::from_bits(bits))
-            .collect();
+        let input = codes.as_slice()?.to_vec();
         let result = self
             .quantizer
             .dequantize(&input)

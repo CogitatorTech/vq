@@ -100,8 +100,7 @@ def product_quantization(image: np.ndarray, num_subspaces: int = 8, num_centroid
     # Quantize and dequantize each row
     result = np.zeros_like(vectors)
     for i in range(height):
-        codes = pq.quantize(vectors[i])
-        # View u16 as float16, then dequantize
+        codes = pq.quantize(vectors[i])  # Returns float16
         result[i] = pq.dequantize(codes)
     
     return result.reshape(height, width, channels)
@@ -126,8 +125,7 @@ def tsvq_quantization(image: np.ndarray, max_depth: int = 6) -> np.ndarray:
     # Quantize and dequantize each row
     result = np.zeros_like(vectors)
     for i in range(height):
-        codes = tsvq.quantize(vectors[i])
-        # View u16 as float16, then dequantize
+        codes = tsvq.quantize(vectors[i])  # Returns float16
         result[i] = tsvq.dequantize(codes)
     
     return result.reshape(height, width, channels)
