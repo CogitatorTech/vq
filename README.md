@@ -12,11 +12,12 @@ It provides implementations of popular quantization algorithms, including binary
 product quantization (PQ), and tree-structured vector quantization (TSVQ).
 
 Vector quantization is a technique to reduce the size of high-dimensional vectors by approximating them with a smaller set of representative vectors.
-It can be used for various applications such as image compression and nearest neighbor search to speed up similarity search in large datasets.
+It can be used for various applications such as data compression and nearest neighbor search to reduce the memory footprint and speed up search.
 
 ### Features
 
 - A simple and generic API for all quantizers
+- Can reduce storage size by up to 75%
 - Good performance via SIMD acceleration, multi-threading, and zero-copying
 - Support for multiple distances including Euclidean, cosine, and Manhattan distances
 - Python bindings via [PyVq](https://pypi.org/project/pyvq/) package
@@ -55,7 +56,7 @@ cargo add vq --features parallel simd
 > [!NOTE]
 > The `parallel` and `simd` features enables multi-threading support and SIMD acceleration support for training phase of PQ and TSVQ algorithms.
 > This can significantly speed up training time, especially for large datasets.
-> Note that the `simd` feature needs a modern C compiler (like GCC, Clang, or MSVC) that supports C11 standard.
+> Note that the enable `simd` feature a modern C compiler (like GCC or Clang) that supports C11 standard is needed.
 
 *Vq requires Rust 1.85 or later.*
 
@@ -63,8 +64,13 @@ cargo add vq --features parallel simd
 
 ### Python Bindings
 
-Vq can be used from Python via PyVq Python package.
-Check out the [pyvq](pyvq) directory for PyVq source code.
+Python bindings for Vq are available via [PyVq](https://pypi.org/project/pyvq/) package.
+
+```bash
+pip install pyvq
+```
+
+For more information, check out the [pyvq](pyvq) directory.
 
 ---
 

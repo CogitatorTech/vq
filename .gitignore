@@ -85,3 +85,4 @@ pyvq/target
 pyvq/wheels
 .env
 .benchmarks/
+site/

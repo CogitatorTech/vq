@@ -1,8 +1,8 @@
-site_name: Vq Documentation
-site_description: A Vector Quantization Library for Rust
+site_name: PyVq Documentation
+site_description: Python bindings for the Vq vector quantization library
 repo_url: https://github.com/CogitatorTech/vq
 repo_name: CogitatorTech/vq
-site_url: https://cogitatortech.github.io/vq/
+site_url: https://cogitatortech.github.io/vq/python/
 
 theme:
   name: material
@@ -49,18 +49,19 @@ nav:
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
       - Concepts: getting-started/concepts.md
-  - User Guide:
-      - Binary Quantizer: guide/bq.md
-      - Scalar Quantizer: guide/sq.md
-      - Product Quantizer: guide/pq.md
-      - Tree-Structured VQ: guide/tsvq.md
-      - Distance Metrics: guide/distance.md
   - API Reference:
-      - Quantizer Trait: api/quantizer.md
       - Distance: api/distance.md
-      - Errors: api/errors.md
+      - BinaryQuantizer: api/bq.md
+      - ScalarQuantizer: api/sq.md
+      - ProductQuantizer: api/pq.md
+      - TSVQ: api/tsvq.md
   - Examples:
       - Basic Usage: examples/basic.md
+
+extra_javascript:
+  - assets/js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -75,8 +76,3 @@ markdown_extensions:
   - attr_list
   - toc:
       permalink: true
-
-extra_javascript:
-  - assets/js/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
