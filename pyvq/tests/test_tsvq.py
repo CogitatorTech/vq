@@ -32,7 +32,7 @@ def test_tsvq_quantize():
     vector = training[0].copy()
     codes = tsvq.quantize(vector)
     assert isinstance(codes, np.ndarray)
-    assert codes.dtype == np.float32
+    assert codes.dtype == np.float16
     assert len(codes) == 10
 
 
