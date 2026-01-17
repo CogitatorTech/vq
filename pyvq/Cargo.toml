@@ -1,6 +1,6 @@
 [package]
 name = "pyvq"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 edition = "2024"
 publish = false
 
@@ -12,5 +12,5 @@ doc = false
 [dependencies]
 vq = { path = "..", features = ["simd", "parallel"] }
 pyo3 = { version = "=0.24.1", features = ["abi3-py310", "extension-module", "auto-initialize"] }
-numpy = "=0.24"
+numpy = { version = "=0.24", features = ["half"] }
 half = "2.4"

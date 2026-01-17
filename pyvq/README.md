@@ -7,10 +7,6 @@
 
 PyVq provides Python bindings for [Vq](https://github.com/CogitatorTech/vq) vector quantization library.
 
-> [!IMPORTANT]
-> PyVq is in early development, so breaking changes and bugs are expected.
-> Please report bugs on [GitHub issues](https://github.com/CogitatorTech/vq/issues).
-
 ### Installation
 
 ```bash
@@ -30,7 +26,7 @@ codes = bq.quantize(vector)
 print(f"Binary codes: {codes}")  # [0, 1, 1, 1]
 
 # Scalar Quantization  
-sq = pyvq.ScalarQuantizer(min_val=-1.0, max_val=1.0, levels=256)
+sq = pyvq.ScalarQuantizer(min=-1.0, max=1.0, levels=256)
 quantized = sq.quantize(vector)
 reconstructed = sq.dequantize(quantized)
 print(f"Reconstructed: {reconstructed}")

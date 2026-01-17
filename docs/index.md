@@ -1,23 +1,24 @@
 # Vq
 
-Vq (**v**ector **q**uantizer) is a vector quantization library for Rust. It provides efficient implementations of popular quantization algorithms for compressing high-dimensional vectors.
+Vq (**v**ector **q**uantizer) is a vector quantization library for Rust.
+It provides efficient implementations of popular quantization algorithms for compressing high-dimensional vectors.
 
 ## Features
 
 - Simple and generic API via the `Quantizer` trait
-- Up to 75% storage reduction
-- SIMD acceleration (AVX/AVX2/AVX512/NEON/SVE) via the `simd` feature
+- Morer than 50% reduction in storage size of input vectors
+- SIMD acceleration support (AVX/AVX2/AVX512/NEON/SVE) via the `simd` feature
 - Multi-threaded training via the `parallel` feature
 - Multiple distance metrics: Euclidean, Manhattan, Cosine
 
 ## Supported Algorithms
 
-| Algorithm | Training | Quantization | Compression | Use Case |
-|-----------|----------|--------------|-------------|----------|
-| [Binary (BQ)](guide/bq.md) | $O(1)$ | $O(nd)$ | 75% | Fast binary similarity |
-| [Scalar (SQ)](guide/sq.md) | $O(1)$ | $O(nd)$ | 75% | Uniform value ranges |
-| [Product (PQ)](guide/pq.md) | $O(nkd)$ | $O(nd)$ | 50% | Large-scale ANN search |
-| [Tree-Structured (TSVQ)](guide/tsvq.md) | $O(n \log k)$ | $O(d \log k)$ | 50% | Hierarchical clustering |
+| Algorithm                               | Training      | Quantization  | Compression | Use Case                |
+|-----------------------------------------|---------------|---------------|-------------|-------------------------|
+| [Binary (BQ)](guide/bq.md)              | $O(1)$        | $O(nd)$       | 75%         | Fast binary similarity  |
+| [Scalar (SQ)](guide/sq.md)              | $O(1)$        | $O(nd)$       | 75%         | Uniform value ranges    |
+| [Product (PQ)](guide/pq.md)             | $O(nkd)$      | $O(nd)$       | 50%         | Large-scale ANN search  |
+| [Tree-Structured (TSVQ)](guide/tsvq.md) | $O(n \log k)$ | $O(d \log k)$ | 50%         | Hierarchical clustering |
 
 Where $n$ = number of vectors, $d$ = dimensions, $k$ = centroids.
 

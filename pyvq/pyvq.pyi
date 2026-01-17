@@ -273,7 +273,7 @@ class ProductQuantizer:
         """
         ...
 
-    def quantize(self, vector: NDArray[np.float32]) -> NDArray[np.float32]:
+    def quantize(self, vector: NDArray[np.float32]) -> NDArray[np.float16]:
         """
         Quantize a vector.
 
@@ -281,16 +281,16 @@ class ProductQuantizer:
             vector: Input vector as numpy array (float32).
 
         Returns:
-            Quantized representation as numpy array (float32).
+            Quantized representation as numpy array (float16).
         """
         ...
 
-    def dequantize(self, codes: NDArray[np.float32]) -> NDArray[np.float32]:
+    def dequantize(self, codes: NDArray[np.float16]) -> NDArray[np.float32]:
         """
         Reconstruct a vector from its quantized representation.
 
         Args:
-            codes: Quantized representation as numpy array (float32).
+            codes: Quantized representation as numpy array (float16).
 
         Returns:
             Reconstructed vector as numpy array (float32).
@@ -351,7 +351,7 @@ class TSVQ:
         """
         ...
 
-    def quantize(self, vector: NDArray[np.float32]) -> NDArray[np.float32]:
+    def quantize(self, vector: NDArray[np.float32]) -> NDArray[np.float16]:
         """
         Quantize a vector.
 
@@ -359,16 +359,16 @@ class TSVQ:
             vector: Input vector as numpy array (float32).
 
         Returns:
-            Quantized representation (leaf centroid) as numpy array (float32).
+            Quantized representation (leaf centroid) as numpy array (float16).
         """
         ...
 
-    def dequantize(self, codes: NDArray[np.float32]) -> NDArray[np.float32]:
+    def dequantize(self, codes: NDArray[np.float16]) -> NDArray[np.float32]:
         """
         Reconstruct a vector from its quantized representation.
 
         Args:
-            codes: Quantized representation as numpy array (float32).
+            codes: Quantized representation as numpy array (float16).
 
         Returns:
             Reconstructed vector as numpy array (float32).
