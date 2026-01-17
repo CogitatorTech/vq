@@ -1,3 +1,4 @@
+use half::f16;
 use numpy::{IntoPyArray, PyArray1, PyReadonlyArray1, PyReadonlyArray2, PyUntypedArrayMethods};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -91,17 +92,18 @@ impl ProductQuantizer {
     ///     vector: Input vector as numpy array (float32).
     ///
     /// Returns:
-    ///     Quantized representation as numpy array (float32).
+    ///     Quantized representation as numpy array (float16 stored as u16 bits).
+    ///     Use `.view(np.float16)` to interpret as float16.
     fn quantize<'py>(
         &self,
         py: Python<'py>,
         vector: PyReadonlyArray1<f32>,
-    ) -> PyResult<Bound<'py, PyArray1<f32>>> {
+    ) -> PyResult<Bound<'py, PyArray1<u16>>> {
         let input = vector.as_slice()?;
-        let result: Vec<f32> = self
+        let result: Vec<u16> = self
             .quantizer
             .quantize(input)
-            .map(|codes| codes.iter().map(|c| c.to_f32()).collect())
+            .map(|codes| codes.iter().map(|c| c.to_bits()).collect())
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(result.into_pyarray(py))
     }
@@ -109,19 +111,19 @@ impl ProductQuantizer {
     /// Reconstruct a vector from its quantized representation.
     ///
     /// Args:
-    ///     codes: Quantized representation as numpy array (float32).
+    ///     codes: Quantized representation as numpy array (float16 as u16 bits or via `.view(np.uint16)`).
     ///
     /// Returns:
     ///     Reconstructed vector as numpy array (float32).
     fn dequantize<'py>(
         &self,
         py: Python<'py>,
-        codes: PyReadonlyArray1<f32>,
+        codes: PyReadonlyArray1<u16>,
     ) -> PyResult<Bound<'py, PyArray1<f32>>> {
-        let input: Vec<half::f16> = codes
+        let input: Vec<f16> = codes
             .as_slice()?
             .iter()
-            .map(|&c| half::f16::from_f32(c))
+            .map(|&bits| f16::from_bits(bits))
             .collect();
         let result = self
             .quantizer

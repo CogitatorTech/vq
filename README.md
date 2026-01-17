@@ -75,7 +75,7 @@ Below is a visual comparison of different quantization algorithms applied to a 1
 #### Installing Vq
 
 ```bash
-cargo add vq --features parallel simd
+cargo add vq --features parallel,simd
 ```
 
 > [!NOTE]
@@ -165,8 +165,8 @@ make eval-all
 
 > [!NOTE]
 > To run the benchmarks, you need to have GNU Make installed.
-> The `make eval-all` command will run each quanttizer on a set of high-dimensional synthetic data and report runtime (second) and recunstruction
-> error (RME).
+> The `make eval-all` command will run each quantizer on a set of high-dimensional synthetic data and report runtime (ms) and reconstruction
+> error (RMSE).
 
 ---
 
