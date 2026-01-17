@@ -7,10 +7,6 @@
 
 PyVq provides Python bindings for [Vq](https://github.com/CogitatorTech/vq) vector quantization library.
 
-> [!IMPORTANT]
-> PyVq is in early development, so breaking changes and bugs are expected.
-> Please report bugs on [GitHub issues](https://github.com/CogitatorTech/vq/issues).
-
 ### Installation
 
 ```bash
