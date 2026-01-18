@@ -1,6 +1,6 @@
 # Vq
 
-Vq (**v**ector **q**uantizer) is a vector quantization library for Rust.
+Vq (**v**ector **q**uantizer) is a vector quantization library for Rust 🦀.
 It provides efficient implementations of popular quantization algorithms for compressing high-dimensional vectors.
 
 ## Features
@@ -13,12 +13,12 @@ It provides efficient implementations of popular quantization algorithms for com
 
 ## Supported Algorithms
 
-| Algorithm              | Training      | Quantization  | Compression |
-|------------------------|---------------|---------------|-------------|
-| Binary (BQ)            | $O(1)$        | $O(nd)$       | 75%         |
-| Scalar (SQ)            | $O(1)$        | $O(nd)$       | 75%         |
-| Product (PQ)           | $O(nkd)$      | $O(nd)$       | 50%         |
-| Tree-Structured (TSVQ) | $O(n \log k)$ | $O(d \log k)$ | 50%         |
+| Algorithm              | Training Complexity | Quantization Complexity | Minimum Storage Reduction |
+|------------------------|---------------------|-------------------------|---------------------------|
+| Binary (BQ)            | $O(1)$              | $O(nd)$                 | 75%                       |
+| Scalar (SQ)            | $O(1)$              | $O(nd)$                 | 75%                       |
+| Product (PQ)           | $O(nkd)$            | $O(nd)$                 | 50%                       |
+| Tree-Structured (TSVQ) | $O(n \log k)$       | $O(d \log k)$           | 50%                       |
 
 Where $n$ is number of vectors, $d$ is the number of dimensions of a vector, and $k$ is the number of centroids used in clustering (for PQ and TSVQ).
 
@@ -41,7 +41,7 @@ fn main() -> vq::VqResult<()> {
 
 ## Python Bindings
 
-Python bindings are available via [PyVq](https://pypi.org/project/pyvq/):
+Python 🐍 bindings are available via [PyVq](https://pypi.org/project/pyvq/):
 
 ```bash
 pip install pyvq
