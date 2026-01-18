@@ -17,6 +17,16 @@ pub enum Distance {
 }
 
 impl Distance {
+    /// Returns the name of this distance metric.
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Distance::SquaredEuclidean => "squared_euclidean",
+            Distance::Euclidean => "euclidean",
+            Distance::Manhattan => "manhattan",
+            Distance::CosineDistance => "cosine",
+        }
+    }
+
     /// Computes the distance between two vectors using the specified metric.
     ///
     /// If the `simd` feature is enabled, this method will use SIMD-accelerated

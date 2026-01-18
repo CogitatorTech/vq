@@ -143,6 +143,78 @@ impl<T: Real> Vector<T> {
     }
 }
 
+// Fallible arithmetic operations
+impl<T: Real> Vector<T> {
+    /// Adds two vectors element-wise, returning an error on dimension mismatch.
+    ///
+    /// # Errors
+    ///
+    /// Returns `VqError::DimensionMismatch` if vectors have different dimensions.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use vq::core::vector::Vector;
+    ///
+    /// let a = Vector::new(vec![1.0, 2.0, 3.0]);
+    /// let b = Vector::new(vec![4.0, 5.0, 6.0]);
+    /// let c = a.try_add(&b).unwrap();
+    /// assert_eq!(c.data(), &[5.0, 7.0, 9.0]);
+    /// ```
+    pub fn try_add(&self, other: &Self) -> VqResult<Vector<T>> {
+        if self.len() != other.len() {
+            return Err(VqError::DimensionMismatch {
+                expected: self.len(),
+                found: other.len(),
+            });
+        }
+        let data = self
+            .data
+            .iter()
+            .zip(other.data.iter())
+            .map(|(&a, &b)| a + b)
+            .collect();
+        Ok(Vector::new(data))
+    }
+
+    /// Subtracts two vectors element-wise, returning an error on dimension mismatch.
+    ///
+    /// # Errors
+    ///
+    /// Returns `VqError::DimensionMismatch` if vectors have different dimensions.
+    pub fn try_sub(&self, other: &Self) -> VqResult<Vector<T>> {
+        if self.len() != other.len() {
+            return Err(VqError::DimensionMismatch {
+                expected: self.len(),
+                found: other.len(),
+            });
+        }
+        let data = self
+            .data
+            .iter()
+            .zip(other.data.iter())
+            .map(|(&a, &b)| a - b)
+            .collect();
+        Ok(Vector::new(data))
+    }
+
+    /// Divides each element by a scalar, returning an error if scalar is zero.
+    ///
+    /// # Errors
+    ///
+    /// Returns `VqError::InvalidParameter` if scalar is zero.
+    pub fn try_div(&self, scalar: T) -> VqResult<Vector<T>> {
+        if scalar == T::zero() {
+            return Err(VqError::InvalidParameter {
+                parameter: "scalar",
+                reason: "Cannot divide by zero".to_string(),
+            });
+        }
+        let data = self.data.iter().map(|&a| a / scalar).collect();
+        Ok(Vector::new(data))
+    }
+}
+
 impl Vector<f32> {
     /// Checks if two vectors are approximately equal within an epsilon tolerance.
     ///
@@ -325,14 +397,16 @@ pub fn lbg_quantize(
         return Err(VqError::EmptyInput);
     }
     if k == 0 {
-        return Err(VqError::InvalidParameter(
-            "k must be greater than 0".to_string(),
-        ));
+        return Err(VqError::InvalidParameter {
+            parameter: "k",
+            reason: "must be greater than 0".to_string(),
+        });
     }
     if data.len() < k {
-        return Err(VqError::InvalidParameter(
-            "Not enough data points for k clusters".to_string(),
-        ));
+        return Err(VqError::InvalidParameter {
+            parameter: "k",
+            reason: format!("not enough data points ({}) for {} clusters", data.len(), k),
+        });
     }
 
     let mut rng = StdRng::seed_from_u64(seed);

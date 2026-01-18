@@ -104,14 +104,16 @@ impl ProductQuantizer {
         }
 
         if dim < m {
-            return Err(VqError::InvalidParameter(
-                "Data dimension must be at least m".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "m",
+                reason: format!("must be at most the data dimension ({})", dim),
+            });
         }
         if dim % m != 0 {
-            return Err(VqError::InvalidParameter(
-                "Data dimension must be divisible by m".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "m",
+                reason: format!("dimension ({}) must be divisible by m", dim),
+            });
         }
         let sub_dim = dim / m;
 
@@ -151,6 +153,11 @@ impl ProductQuantizer {
     /// Returns the expected input vector dimension.
     pub fn dim(&self) -> usize {
         self.dim
+    }
+
+    /// Returns the name of the distance metric used.
+    pub fn distance_metric(&self) -> &'static str {
+        self.distance.name()
     }
 }
 

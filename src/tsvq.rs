@@ -17,6 +17,17 @@ struct TSVQNode {
 }
 
 impl TSVQNode {
+    /// Build from vector references (avoids cloning)
+    fn build_from_refs(training_data: &[&Vector<f32>], max_depth: usize) -> VqResult<Self> {
+        if training_data.is_empty() {
+            return Err(VqError::EmptyInput);
+        }
+
+        // Clone vectors for this call (only when actually needed)
+        let owned_data: Vec<Vector<f32>> = training_data.iter().map(|&v| v.clone()).collect();
+        Self::build(&owned_data, max_depth)
+    }
+
     fn build(training_data: &[Vector<f32>], max_depth: usize) -> VqResult<Self> {
         if training_data.is_empty() {
             return Err(VqError::EmptyInput);
@@ -72,19 +83,27 @@ impl TSVQNode {
             values[values.len() / 2]
         };
 
-        let (left_data, right_data): (Vec<_>, Vec<_>) = training_data
-            .iter()
-            .cloned()
-            .partition(|v| v.data[split_dim] <= median);
+        // Partition using indices to avoid cloning vectors
+        let (left_indices, right_indices): (Vec<_>, Vec<_>) = (0..training_data.len())
+            .partition(|&i| training_data[i].data[split_dim] <= median);
 
-        let left = if !left_data.is_empty() && left_data.len() < training_data.len() {
-            Some(Box::new(TSVQNode::build(&left_data, max_depth - 1)?))
+        // Build child nodes using vector references
+        let left = if !left_indices.is_empty() && left_indices.len() < training_data.len() {
+            let left_data: Vec<&Vector<f32>> = left_indices
+                .iter()
+                .map(|&i| &training_data[i])
+                .collect();
+            Some(Box::new(TSVQNode::build_from_refs(&left_data, max_depth - 1)?))
         } else {
             None
         };
 
-        let right = if !right_data.is_empty() && right_data.len() < training_data.len() {
-            Some(Box::new(TSVQNode::build(&right_data, max_depth - 1)?))
+        let right = if !right_indices.is_empty() && right_indices.len() < training_data.len() {
+            let right_data: Vec<&Vector<f32>> = right_indices
+                .iter()
+                .map(|&i| &training_data[i])
+                .collect();
+            Some(Box::new(TSVQNode::build_from_refs(&right_data, max_depth - 1)?))
         } else {
             None
         };
@@ -207,6 +226,11 @@ impl TSVQ {
     /// Returns the expected input vector dimension.
     pub fn dim(&self) -> usize {
         self.dim
+    }
+
+    /// Returns the name of the distance metric used.
+    pub fn distance_metric(&self) -> &'static str {
+        self.distance.name()
     }
 }
 

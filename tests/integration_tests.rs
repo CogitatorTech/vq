@@ -199,7 +199,7 @@ fn test_pq_dimension_not_divisible() {
 
     // dim=10 is not divisible by m=3
     let result = ProductQuantizer::new(&training_refs, 3, 4, 10, Distance::Euclidean, 42);
-    assert!(matches!(result, Err(VqError::InvalidParameter(_))));
+    assert!(matches!(result, Err(VqError::InvalidParameter { .. })));
 }
 
 // =============================================================================
