@@ -169,6 +169,17 @@ impl TSVQ {
         }
 
         let dim = training_data[0].len();
+
+        // Validate all training vectors have the same dimension
+        for vec_slice in training_data.iter() {
+            if vec_slice.len() != dim {
+                return Err(VqError::DimensionMismatch {
+                    expected: dim,
+                    found: vec_slice.len(),
+                });
+            }
+        }
+
         let vectors: Vec<Vector<f32>> = training_data
             .iter()
             .map(|&slice| Vector::new(slice.to_vec()))

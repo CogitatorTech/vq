@@ -572,14 +572,14 @@ fn test_bq_dequantize_with_arbitrary_values() {
     let arbitrary = vec![0, 5, 10, 15, 20, 25, 255];
     let result = bq.dequantize(&arbitrary).unwrap();
 
-    // Values >= high (20) map to 1.0, others to 0.0
-    assert_eq!(result[0], 0.0); // 0 < 20
-    assert_eq!(result[1], 0.0); // 5 < 20
-    assert_eq!(result[2], 0.0); // 10 < 20
-    assert_eq!(result[3], 0.0); // 15 < 20
-    assert_eq!(result[4], 1.0); // 20 >= 20
-    assert_eq!(result[5], 1.0); // 25 >= 20
-    assert_eq!(result[6], 1.0); // 255 >= 20
+    // Values >= high (20) map to high (20.0), others to low (10.0)
+    assert_eq!(result[0], 10.0); // 0 < 20
+    assert_eq!(result[1], 10.0); // 5 < 20
+    assert_eq!(result[2], 10.0); // 10 < 20
+    assert_eq!(result[3], 10.0); // 15 < 20
+    assert_eq!(result[4], 20.0); // 20 >= 20
+    assert_eq!(result[5], 20.0); // 25 >= 20
+    assert_eq!(result[6], 20.0); // 255 >= 20
 }
 
 #[test]

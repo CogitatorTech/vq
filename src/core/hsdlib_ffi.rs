@@ -70,6 +70,9 @@ pub fn sqeuclidean_f32(a: &[f32], b: &[f32]) -> Option<f32> {
         return None;
     }
     let mut result: f32 = 0.0;
+    // SAFETY: Both slices are guaranteed to have the same length (checked above).
+    // The C function only reads from the pointers and writes to result.
+    // Slices guarantee valid memory regions.
     let status: HsdStatus =
         unsafe { hsd_dist_sqeuclidean_f32(a.as_ptr(), b.as_ptr(), a.len(), &mut result) }.into();
     if status.is_success() {
@@ -88,6 +91,9 @@ pub fn manhattan_f32(a: &[f32], b: &[f32]) -> Option<f32> {
         return None;
     }
     let mut result: f32 = 0.0;
+    // SAFETY: Both slices are guaranteed to have the same length (checked above).
+    // The C function only reads from the pointers and writes to result.
+    // Slices ensure valid memory regions.
     let status: HsdStatus =
         unsafe { hsd_dist_manhattan_f32(a.as_ptr(), b.as_ptr(), a.len(), &mut result) }.into();
     if status.is_success() {
@@ -106,6 +112,9 @@ pub fn cosine_f32(a: &[f32], b: &[f32]) -> Option<f32> {
         return None;
     }
     let mut result: f32 = 0.0;
+    // SAFETY: Both slices are guaranteed to have the same length (checked above).
+    // The C function only reads from the pointers and writes to result.
+    // Slices ensure valid memory regions.
     let status: HsdStatus =
         unsafe { hsd_sim_cosine_f32(a.as_ptr(), b.as_ptr(), a.len(), &mut result) }.into();
     if status.is_success() {
@@ -133,6 +142,9 @@ pub fn cosine_f32(a: &[f32], b: &[f32]) -> Option<f32> {
 /// }
 /// ```
 pub fn get_simd_backend() -> String {
+    // SAFETY: hsd_get_backend() returns a pointer to a static string literal
+    // managed by the C library. The pointer is valid for the lifetime of the program.
+    // We check for null pointer before dereferencing.
     unsafe {
         let ptr = hsd_get_backend();
         if ptr.is_null() {

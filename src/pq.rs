@@ -92,6 +92,17 @@ impl ProductQuantizer {
             return Err(VqError::EmptyInput);
         }
         let dim = training_data[0].len();
+
+        // Validate all training vectors have the same dimension
+        for vec in training_data.iter() {
+            if vec.len() != dim {
+                return Err(VqError::DimensionMismatch {
+                    expected: dim,
+                    found: vec.len(),
+                });
+            }
+        }
+
         if dim < m {
             return Err(VqError::InvalidParameter(
                 "Data dimension must be at least m".to_string(),
