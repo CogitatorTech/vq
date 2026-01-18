@@ -19,7 +19,7 @@ It can be used for various applications such as data compression and nearest nei
 ### Features
 
 - A simple and generic API for all quantizers
-- Can reduce storage size of input vectors at least 50%
+- Can reduce storage size of input vectors, at least 50% (2x)
 - Good performance via SIMD acceleration (using [Hsdlib](https://github.com/habedi/hsdlib)), multi-threading, and zero-copying
 - Support for multiple distances including Euclidean, cosine, and Manhattan distances
 - Python 🐍 bindings via [PyVq](https://pypi.org/project/pyvq/) package
