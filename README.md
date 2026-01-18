@@ -181,4 +181,4 @@ Vq is available under either of the following licenses:
 
 ### Acknowledgements
 
-* This project uses [Hsdlib](https://github.com/habedi/hsdlib) library for SIMD acceleration.
+* This project uses [Hsdlib](https://github.com/habedi/hsdlib) C library for SIMD acceleration.
