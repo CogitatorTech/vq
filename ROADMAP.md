@@ -58,5 +58,5 @@ It outlines features to be implemented and their current status.
 * [x] Integration tests
 * [x] Documentation examples
 * [x] Code coverage setup
+* [x] Python API documentation
 * [ ] Performance benchmarks report
-* [ ] Python API documentation
