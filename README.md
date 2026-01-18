@@ -7,8 +7,6 @@
 [![Documentation](https://img.shields.io/badge/docs-read-00acc1?style=flat&labelColor=282c34&logo=readthedocs)](https://CogitatorTech.github.io/vq)
 [<img alt="license" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-007ec6?label=license&style=flat&labelColor=282c34&logo=open-source-initiative" height="20">](https://github.com/CogitatorTech/vq)
 
----
-
 Vq (**v**[ector] **q**[uantizer]) is a vector quantization library for Rust.
 It provides implementations of popular quantization algorithms, including binary quantization (BQ), scalar quantization (SQ),
 product quantization (PQ), and tree-structured vector quantization (TSVQ).
