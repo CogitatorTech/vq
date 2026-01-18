@@ -62,29 +62,34 @@ impl ScalarQuantizer {
     /// - `levels < 2` or `levels > 256`
     pub fn new(min: f32, max: f32, levels: usize) -> VqResult<Self> {
         if !min.is_finite() {
-            return Err(VqError::InvalidParameter(
-                "min must be a finite value (not NaN or Infinity)".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "min",
+                reason: "must be finite (not NaN or infinite)".to_string(),
+            });
         }
         if !max.is_finite() {
-            return Err(VqError::InvalidParameter(
-                "max must be a finite value (not NaN or Infinity)".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "max",
+                reason: "must be finite (not NaN or infinite)".to_string(),
+            });
         }
         if max <= min {
-            return Err(VqError::InvalidParameter(
-                "max must be greater than min".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "max",
+                reason: "must be greater than min".to_string(),
+            });
         }
         if levels < 2 {
-            return Err(VqError::InvalidParameter(
-                "levels must be at least 2".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "levels",
+                reason: "must be at least 2".to_string(),
+            });
         }
         if levels > 256 {
-            return Err(VqError::InvalidParameter(
-                "levels must be no more than 256".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "levels",
+                reason: "must be no more than 256 to fit in u8".to_string(),
+            });
         }
         let step = (max - min) / (levels - 1) as f32;
         Ok(Self {
@@ -126,9 +131,15 @@ impl Quantizer for ScalarQuantizer {
     type QuantizedOutput = Vec<u8>;
 
     fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        // Safety assertion: levels was validated to be <= 256 in constructor
+        debug_assert!(self.levels <= 256, "levels must be <= 256 to fit in u8");
         Ok(vector
             .iter()
-            .map(|&x| self.quantize_scalar(x) as u8)
+            .map(|&x| {
+                let idx = self.quantize_scalar(x);
+                debug_assert!(idx < 256, "quantize_scalar returned index >= 256");
+                idx as u8
+            })
             .collect())
     }
 

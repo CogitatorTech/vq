@@ -51,17 +51,19 @@ impl BinaryQuantizer {
     ///
     /// Returns an error if:
     /// - `low >= high`
-    /// - `threshold` is NaN
+    /// - `threshold` is NaN or infinite
     pub fn new(threshold: f32, low: u8, high: u8) -> VqResult<Self> {
-        if threshold.is_nan() {
-            return Err(VqError::InvalidParameter(
-                "Threshold cannot be NaN".to_string(),
-            ));
+        if !threshold.is_finite() {
+            return Err(VqError::InvalidParameter {
+                parameter: "threshold",
+                reason: "must be finite (not NaN or infinite)".to_string(),
+            });
         }
         if low >= high {
-            return Err(VqError::InvalidParameter(
-                "Low quantization level must be less than high quantization level".to_string(),
-            ));
+            return Err(VqError::InvalidParameter {
+                parameter: "low/high",
+                reason: "low must be less than high".to_string(),
+            });
         }
         Ok(Self {
             threshold,
@@ -105,7 +107,13 @@ impl Quantizer for BinaryQuantizer {
     fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>> {
         Ok(quantized
             .iter()
-            .map(|&x| if x >= self.high { 1.0 } else { 0.0 })
+            .map(|&x| {
+                if x >= self.high {
+                    self.high as f32
+                } else {
+                    self.low as f32
+                }
+            })
             .collect())
     }
 }

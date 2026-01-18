@@ -17,6 +17,16 @@ pub enum Distance {
 }
 
 impl Distance {
+    /// Returns the name of this distance metric.
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Distance::SquaredEuclidean => "squared_euclidean",
+            Distance::Euclidean => "euclidean",
+            Distance::Manhattan => "manhattan",
+            Distance::CosineDistance => "cosine",
+        }
+    }
+
     /// Computes the distance between two vectors using the specified metric.
     ///
     /// If the `simd` feature is enabled, this method will use SIMD-accelerated
@@ -98,10 +108,14 @@ fn compute_cosine_distance(a: &[f32], b: &[f32]) -> f32 {
     let norm_a = a.iter().map(|&x| x * x).sum::<f32>().sqrt();
     let norm_b = b.iter().map(|&x| x * x).sum::<f32>().sqrt();
 
-    if norm_a == 0.0 || norm_b == 0.0 {
+    // Use epsilon to handle near-zero norms (avoids division by very small numbers)
+    const EPSILON: f32 = 1e-10;
+    if norm_a < EPSILON || norm_b < EPSILON {
+        // Zero or near-zero vectors are considered maximally distant
         1.0
     } else {
-        1.0 - (dot / (norm_a * norm_b))
+        // Clamp result to [0, 1] to handle floating-point errors
+        (1.0 - (dot / (norm_a * norm_b))).clamp(0.0, 1.0)
     }
 }
 

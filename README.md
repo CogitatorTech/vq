@@ -15,6 +15,8 @@ Vector quantization is a technique to reduce the size of high-dimensional vector
 It can be used for various applications such as data compression and nearest neighbor search to reduce the memory footprint and speed up search.
 For example, vector quantization can be used to reduce the size of data stored in a vector database or speed up the response time of a RAG-based
 application.
+For more information about vector quantization, check out
+[this article](https://docs.weaviate.io/weaviate/concepts/vector-quantization) from Weaviate documentation.
 
 ### Features
 

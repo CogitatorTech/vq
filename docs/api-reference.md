@@ -71,6 +71,7 @@ ProductQuantizer::new(
 fn num_subspaces(&self) -> usize
 fn sub_dim(&self) -> usize
 fn dim(&self) -> usize
+fn distance_metric(&self) -> &'static str  // "euclidean", "cosine", etc.
 
 // Output type: Vec<f16>
 ```
@@ -89,6 +90,7 @@ TSVQ::new(
 
 // Getters
 fn dim(&self) -> usize
+fn distance_metric(&self) -> &'static str  // "euclidean", "cosine", etc.
 
 // Output type: Vec<f16>
 ```
@@ -109,7 +111,36 @@ pub enum Distance {
 
 // Usage
 Distance::Euclidean.compute(a: &[f32], b: &[f32]) -> VqResult<f32>
+
+// Get metric name
+Distance::Euclidean.name() -> &'static str  // "euclidean"
 ```
+
+## Vector Operations (Advanced)
+
+The `Vector<T>` type provides fallible arithmetic operations:
+
+```rust
+use vq::core::vector::Vector;
+
+// Fallible operations (return Result)
+vec_a.try_add(&vec_b) -> VqResult<Vector<T>>
+vec_a.try_sub(&vec_b) -> VqResult<Vector<T>>
+vec_a.try_div(scalar) -> VqResult<Vector<T>>
+
+// Trait-based operations (panic on error)
+&vec_a + &vec_b  // panics if dimensions mismatch
+&vec_a - &vec_b
+&vec_a * scalar
+&vec_a / scalar
+
+// Other methods
+vec_a.dot(&vec_b) -> T     // panics if dimensions mismatch
+vec_a.norm() -> T
+vec_a.distance2(&vec_b) -> T
+```
+
+**Note:** Use `try_*` methods for safe error handling, or the trait operators for internal code where dimensions are guaranteed to match.
 
 ## Error Handling
 
@@ -119,11 +150,20 @@ All operations return `VqResult<T>`, which is `Result<T, VqError>`:
 
 ```rust
 pub enum VqError {
+    /// Vectors have mismatched dimensions
     DimensionMismatch { expected: usize, found: usize },
+
+    /// Input data is empty
     EmptyInput,
-    InvalidParameter(String),
-    InvalidMetricParameter { metric: String, details: String },
-    InvalidInput(String),
+
+    /// A configuration parameter is invalid
+    InvalidParameter { parameter: &'static str, reason: String },
+
+    /// Input data contains invalid values (NaN, Infinity, etc.)
+    InvalidData(String),
+
+    /// FFI operation failed
+    FfiError(String),
 }
 ```
 

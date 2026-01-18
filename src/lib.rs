@@ -3,13 +3,13 @@
 //! `vq` is a vector quantization library for Rust.
 //!
 //! It provides efficient implementations of various vector quantization algorithms,
-//! including Binary Quantization (BQ), Scalar Quantization (SQ), Product Quantization (PQ),
-//! and Tree-Structured Vector Quantization (TSVQ).
+//! including binary quantization (BQ), scalar quantization (SQ), product quantization (PQ),
+//! and tree-structured vector quantization (TSVQ).
 //!
 //! ## Features
 //!
 //! - Unified API: All algorithms implement the [`Quantizer`] trait.
-//! - Distance metrics: Supports Euclidean, Squared Euclidean, Manhattan, and Cosine distance.
+//! - Distance metrics: Supports Euclidean, squared Euclidean, Manhattan, and cosine distances.
 //! - Performance:
 //!   - SIMD acceleration (AVX/AVX2/AVX512/NEON/SVE) via `simd` feature.
 //!   - Parallel training via `parallel` feature.
