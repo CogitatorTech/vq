@@ -79,7 +79,7 @@ cargo add vq --features parallel,simd
 > [!NOTE]
 > The `parallel` and `simd` features enables multi-threading support and SIMD acceleration support for training phase of PQ and TSVQ algorithms.
 > This can significantly speed up training time, especially for large datasets.
-> Note that the enable `simd` feature a modern C compiler (like GCC or Clang) that supports C11 standard is needed.
+> Note that to enable the `simd` feature, a modern C compiler (like GCC or Clang) that supports C11 standard is needed.
 
 *Vq requires Rust 1.85 or later.*
 
@@ -150,7 +150,7 @@ fn main() -> VqResult<()> {
 
 ### Benchmarks
 
-You could follow the instructions below to run the benchmarks locally your machine.
+You can follow the instructions below to run the benchmarks locally on your machine.
 
 ```bash
 git clone --recursive https://github.com/CogitatorTech/vq.git
