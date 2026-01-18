@@ -1,10 +1,10 @@
 # PyVq
 
-PyVq provides Python bindings for the [Vq](https://github.com/CogitatorTech/vq) vector quantization library.
+PyVq provides Python 🐍 bindings for the [Vq](https://github.com/CogitatorTech/vq) vector quantization library.
 
 ## Features
 
-- High-performance Rust implementation with Python bindings
+- High-performance Rust 🦀 implementation with Python bindings
 - NumPy array support for input and output
 - All quantization algorithms: BinaryQuantizer, ScalarQuantizer, ProductQuantizer, TSVQ
 - SIMD-accelerated distance computations
