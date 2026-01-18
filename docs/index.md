@@ -9,18 +9,18 @@ It provides efficient implementations of popular quantization algorithms for com
 - More than 50% reduction in storage size of input vectors
 - SIMD acceleration support (AVX/AVX2/AVX512/NEON/SVE) via the `simd` feature
 - Multi-threaded training via the `parallel` feature
-- Multiple distance metrics: Euclidean, Manhattan, Cosine
+- Multiple distance metrics: Euclidean, Manhattan, and cosine
 
 ## Supported Algorithms
 
-| Algorithm | Training | Quantization | Compression | Use Case |
-|-----------|----------|--------------|-------------|----------|
-| Binary (BQ) | $O(1)$ | $O(nd)$ | 75% | Fast binary similarity |
-| Scalar (SQ) | $O(1)$ | $O(nd)$ | 75% | Uniform value ranges |
-| Product (PQ) | $O(nkd)$ | $O(nd)$ | 50% | Large-scale ANN search |
-| Tree-Structured (TSVQ) | $O(n \log k)$ | $O(d \log k)$ | 50% | Hierarchical clustering |
+| Algorithm              | Training      | Quantization  | Compression |
+|------------------------|---------------|---------------|-------------|
+| Binary (BQ)            | $O(1)$        | $O(nd)$       | 75%         |
+| Scalar (SQ)            | $O(1)$        | $O(nd)$       | 75%         |
+| Product (PQ)           | $O(nkd)$      | $O(nd)$       | 50%         |
+| Tree-Structured (TSVQ) | $O(n \log k)$ | $O(d \log k)$ | 50%         |
 
-Where $n$ = number of vectors, $d$ = dimensions, $k$ = centroids.
+Where $n$ is number of vectors, $d$ is the number of dimensions of a vector, and $k$ is the number of centroids used in clustering (for PQ and TSVQ).
 
 ## Quick Example
 

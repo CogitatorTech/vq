@@ -1,6 +1,6 @@
-# Basic Usage Examples
+# Examples
 
-Complete examples demonstrating PyVq usage patterns.
+Complete code examples demonstrating PyVq usage patterns.
 
 ## Embedding Compression with Scalar Quantization
 
@@ -15,7 +15,7 @@ embeddings = np.random.randn(1000, 768).astype(np.float32)
 embeddings = embeddings / np.abs(embeddings).max()
 
 # Create scalar quantizer
-sq = pyvq.ScalarQuantizer(min_val=-1.0, max_val=1.0, levels=256)
+sq = pyvq.ScalarQuantizer(min=-1.0, max=1.0, levels=256)
 
 # Compress all embeddings
 compressed = [sq.quantize(e) for e in embeddings]
@@ -45,8 +45,8 @@ database = np.random.randn(10000, 128).astype(np.float32)
 # Train product quantizer
 pq = pyvq.ProductQuantizer(
     training_data=database[:1000],  # Use subset for training
-    m=16,         # 16 subspaces
-    k=256,        # 256 centroids each
+    num_subspaces=16,    # 16 subspaces
+    num_centroids=256,   # 256 centroids each
     max_iters=10,
     distance=pyvq.Distance.squared_euclidean(),
     seed=42
@@ -115,7 +115,7 @@ metrics = [
     ("Euclidean", pyvq.Distance.euclidean()),
     ("Squared Euclidean", pyvq.Distance.squared_euclidean()),
     ("Manhattan", pyvq.Distance.manhattan()),
-    ("Cosine Distance", pyvq.Distance.cosine_distance()),
+    ("Cosine Distance", pyvq.Distance.cosine()),
 ]
 
 print("Distance between random 100-d vectors:")
@@ -143,7 +143,7 @@ bq_r = bq.dequantize(bq_q)
 bq_mse = np.mean((vector - bq_r) ** 2)
 
 # Scalar Quantization
-sq = pyvq.ScalarQuantizer(-3.0, 3.0, 256)
+sq = pyvq.ScalarQuantizer(min=-3.0, max=3.0, levels=256)
 sq_q = sq.quantize(vector)
 sq_r = sq.dequantize(sq_q)
 sq_mse = np.mean((vector - sq_r) ** 2)

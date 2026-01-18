@@ -11,7 +11,7 @@ All quantization algorithms implement this trait:
 ```rust
 pub trait Quantizer {
     type QuantizedOutput;
-    
+
     fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput>;
     fn dequantize(&self, quantized: &Self::QuantizedOutput) -> VqResult<Vec<f32>>;
 }
