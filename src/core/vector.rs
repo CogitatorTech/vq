@@ -105,9 +105,16 @@ impl<T: Real> Vector<T> {
     ///
     /// # Panics
     ///
-    /// Currently does not panic on dimension mismatch here due to zip, but higher level operations enforce dimensions.
+    /// Panics if vectors have different dimensions.
     #[inline]
     pub fn dot(&self, other: &Self) -> T {
+        assert_eq!(
+            self.len(),
+            other.len(),
+            "Cannot compute dot product of vectors with different dimensions: {} vs {}",
+            self.len(),
+            other.len()
+        );
         self.data
             .iter()
             .zip(other.data.iter())
@@ -136,19 +143,47 @@ impl<T: Real> Vector<T> {
     }
 }
 
+impl Vector<f32> {
+    /// Checks if two vectors are approximately equal within an epsilon tolerance.
+    ///
+    /// This is useful for convergence checks in iterative algorithms where exact
+    /// floating-point equality is too strict.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The vector to compare with
+    /// * `epsilon` - The maximum allowed difference per component (default: 1e-6)
+    ///
+    /// # Returns
+    ///
+    /// `true` if all components differ by less than epsilon, `false` otherwise
+    pub fn approx_eq(&self, other: &Self, epsilon: f32) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+        self.data
+            .iter()
+            .zip(other.data.iter())
+            .all(|(&a, &b)| (a - b).abs() < epsilon)
+    }
+}
+
 impl<T: Real> Add for &Vector<T> {
     type Output = Vector<T>;
 
+    /// Adds two vectors element-wise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the vectors have different dimensions.
     fn add(self, other: Self) -> Vector<T> {
-        if self.len() != other.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.len(),
-                    found: other.len()
-                }
-            );
-        }
+        assert_eq!(
+            self.len(),
+            other.len(),
+            "Cannot add vectors with different dimensions: {} vs {}",
+            self.len(),
+            other.len()
+        );
         let data = self
             .data
             .iter()
@@ -162,16 +197,19 @@ impl<T: Real> Add for &Vector<T> {
 impl<T: Real> Sub for &Vector<T> {
     type Output = Vector<T>;
 
+    /// Subtracts two vectors element-wise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the vectors have different dimensions.
     fn sub(self, other: Self) -> Vector<T> {
-        if self.len() != other.len() {
-            panic!(
-                "{}",
-                VqError::DimensionMismatch {
-                    expected: self.len(),
-                    found: other.len()
-                }
-            );
-        }
+        assert_eq!(
+            self.len(),
+            other.len(),
+            "Cannot subtract vectors with different dimensions: {} vs {}",
+            self.len(),
+            other.len()
+        );
         let data = self
             .data
             .iter()
@@ -194,7 +232,14 @@ impl<T: Real> Mul<T> for &Vector<T> {
 impl<T: Real> Div<T> for &Vector<T> {
     type Output = Vector<T>;
 
+    /// Divides each element by a scalar.
+    ///
+    /// # Panics
+    ///
+    /// Panics if scalar is zero. This is consistent with Rust's default division behavior.
+    /// If zero is possible, check before dividing or handle NaN/Infinity in results.
     fn div(self, scalar: T) -> Vector<T> {
+        assert!(scalar != T::zero(), "Cannot divide vector by zero");
         let data = self.data.iter().map(|&a| a / scalar).collect();
         Vector::new(data)
     }
@@ -317,10 +362,12 @@ pub fn lbg_quantize(
 
         // Update centroids
         let mut changed = false;
+        const EPSILON: f32 = 1e-6;
         for j in 0..k {
             if !cluster_indices[j].is_empty() {
                 let new_centroid = mean_vector_by_indices(data, &cluster_indices[j])?;
-                if new_centroid != centroids[j] {
+                // Use epsilon-based comparison instead of exact equality
+                if !new_centroid.approx_eq(&centroids[j], EPSILON) {
                     changed = true;
                 }
                 centroids[j] = new_centroid;

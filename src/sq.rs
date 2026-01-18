@@ -126,9 +126,18 @@ impl Quantizer for ScalarQuantizer {
     type QuantizedOutput = Vec<u8>;
 
     fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
+        // Safety assertion: levels was validated to be <= 256 in constructor
+        debug_assert!(
+            self.levels <= 256,
+            "levels must be <= 256 to fit in u8"
+        );
         Ok(vector
             .iter()
-            .map(|&x| self.quantize_scalar(x) as u8)
+            .map(|&x| {
+                let idx = self.quantize_scalar(x);
+                debug_assert!(idx < 256, "quantize_scalar returned index >= 256");
+                idx as u8
+            })
             .collect())
     }
 

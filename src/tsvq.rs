@@ -48,12 +48,23 @@ impl TSVQNode {
         let split_dim = variances
             .iter()
             .enumerate()
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+            // Filter out NaN values, then find max
+            .filter(|&(_, v)| !v.is_nan())
+            .max_by(|a, b| {
+                a.1.partial_cmp(b.1)
+                    .expect("filtered NaN values, so partial_cmp should succeed")
+            })
             .map(|(i, _)| i)
             .unwrap_or(0);
 
-        let mut values: Vec<f32> = training_data.iter().map(|v| v.data[split_dim]).collect();
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let mut values: Vec<f32> = training_data
+            .iter()
+            .map(|v| v.data[split_dim])
+            .filter(|&x| !x.is_nan()) // Filter out NaN values before sorting
+            .collect();
+
+        // Use total_cmp for stable sorting even with infinities
+        values.sort_by(|a, b| a.total_cmp(b));
 
         let median = if values.len() % 2 == 0 {
             (values[values.len() / 2 - 1] + values[values.len() / 2]) / 2.0
