@@ -8,7 +8,8 @@ use vq::Vector;
 
 pub const SEED: u64 = 66;
 pub const NUM_SAMPLES: [usize; 6] = [1_000, 5_000, 10_000, 50_000, 100_000, 1_000_000];
-pub const DIM: usize = 128;
+// Some typical dimension for embedding vectors are 128, 256, 384, 768, and 1536
+pub const DIM: usize = 384;
 pub const M: usize = 16;
 pub const K: usize = 256;
 pub const MAX_ITERS: usize = 10;
