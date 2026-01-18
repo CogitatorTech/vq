@@ -6,9 +6,9 @@ PyVq provides Python 🐍 bindings for the [Vq](https://github.com/CogitatorTech
 
 - High-performance Rust 🦀 implementation with Python bindings
 - NumPy array support for input and output
-- All quantization algorithms: BinaryQuantizer, ScalarQuantizer, ProductQuantizer, TSVQ
-- SIMD-accelerated distance computations
-- Simple, Pythonic API
+- All quantization algorithms in Vq: BinaryQuantizer, ScalarQuantizer, ProductQuantizer, TSVQ
+- Fast SIMD-accelerated distance computations
+- A simple, Pythonic API
 
 ## Quick Example
 
@@ -39,10 +39,9 @@ print(f"Euclidean distance: {result}")
 ## Installation
 
 ```bash
+# PyVq works with Python 3.10 or later
 pip install pyvq
 ```
-
-Requires Python 3.10 or later.
 
 ## Documentation
 
@@ -55,4 +54,4 @@ Requires Python 3.10 or later.
 For the Rust library documentation, see [docs.rs/vq](https://docs.rs/vq) or the [main documentation](https://cogitatortech.github.io/vq/).
 
 !!! note "Early Development"
-    PyVq is in early development. Please report bugs on [GitHub Issues](https://github.com/CogitatorTech/vq/issues).
+    PyVq is in early development. Please report bugs on project's [issues page](https://github.com/CogitatorTech/vq/issues) on GitHub.
