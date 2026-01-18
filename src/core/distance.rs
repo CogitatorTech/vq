@@ -6,7 +6,7 @@ use crate::core::hsdlib_ffi;
 /// Supported distance metrics for vector comparisons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Distance {
-    /// Squared Euclidean distance (L2^2). efficient for comparisons as it avoids square roots.
+    /// Squared Euclidean distance (L2²). Efficient for comparisons as it avoids square roots.
     SquaredEuclidean,
     /// Euclidean distance (L2).
     Euclidean,

@@ -13,17 +13,32 @@ pub const M: usize = 16;
 pub const K: usize = 256;
 pub const MAX_ITERS: usize = 10;
 
+/// Results from a benchmark run.
 #[derive(serde::Serialize)]
 pub struct BenchmarkResult {
+    /// Number of samples used.
     pub n_samples: usize,
+    /// Dimension of the vectors.
     pub n_dims: usize,
+    /// Time taken for training in milliseconds.
     pub training_time_ms: f64,
+    /// Time taken for quantization in milliseconds.
     pub quantization_time_ms: f64,
+    /// Mean squared reconstruction error.
     pub reconstruction_error: f32,
+    /// Recall at k.
     pub recall: f32,
+    /// Ratio of original size to quantized size.
     pub memory_reduction_ratio: f32,
 }
 
+/// Generates synthetic random vector data.
+///
+/// # Arguments
+///
+/// * `n_samples` - Number of vectors to generate
+/// * `n_dims` - Dimension of each vector
+/// * `seed` - Random seed
 pub fn generate_synthetic_data(n_samples: usize, n_dims: usize, seed: u64) -> Vec<Vector<f32>> {
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
     #[allow(clippy::unwrap_used)]
@@ -36,10 +51,12 @@ pub fn generate_synthetic_data(n_samples: usize, n_dims: usize, seed: u64) -> Ve
         .collect()
 }
 
+/// Computes the Euclidean distance between two vectors.
 pub fn euclidean_distance(a: &Vector<f32>, b: &Vector<f32>) -> f32 {
     a.distance2(b).sqrt()
 }
 
+/// Calculates the mean squared reconstruction error between original and reconstructed vectors.
 pub fn calculate_reconstruction_error(
     original: &[Vector<f32>],
     reconstructed: &[Vector<f32>],
@@ -59,6 +76,15 @@ pub fn calculate_reconstruction_error(
     sum_error / total_elements
 }
 
+/// Calculates the recall@k for approximate nearest neighbor search.
+///
+/// Estimates recall by sampling a subset of queries.
+///
+/// # Arguments
+///
+/// * `original` - Original dataset vectors
+/// * `approx` - Reconstructed/Approximate vectors
+/// * `k` - Number of neighbors to check
 pub fn calculate_recall(original: &[Vector<f32>], approx: &[Vector<f32>], k: usize) -> Result<f32> {
     let n_samples = original.len();
     let max_eval_samples = 1000;

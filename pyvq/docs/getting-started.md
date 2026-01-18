@@ -1,10 +1,20 @@
-# Quick Start
+# Getting Started
 
-This guide demonstrates how to use PyVq for vector quantization.
+This guide covers installation and basic usage of PyVq.
 
-## Basic Quantization
+## Installation
 
-### Binary Quantization
+```bash
+pip install pyvq
+```
+
+!!! note "Requirements"
+    Python 3.10 or later
+
+## Binary Quantization
+
+Binary quantization maps values to 0 or 1 based on a threshold.
+It provides at least 75% storage reduction.
 
 ```python
 import numpy as np
@@ -22,7 +32,9 @@ print(f"Output: {codes}")
 # Output: [0, 0, 1, 1, 1]
 ```
 
-### Scalar Quantization
+## Scalar Quantization
+
+Scalar quantization maps a continuous range to discrete levels.
 
 ```python
 import numpy as np
@@ -30,7 +42,7 @@ import pyvq
 
 # Create a scalar quantizer
 # Maps values from [-1, 1] to 256 discrete levels
-sq = pyvq.ScalarQuantizer(min_val=-1.0, max_val=1.0, levels=256)
+sq = pyvq.ScalarQuantizer(min=-1.0, max=1.0, levels=256)
 
 # Quantize and dequantize
 vector = np.array([0.1, -0.3, 0.7, -0.9], dtype=np.float32)
@@ -41,7 +53,10 @@ print(f"Original:      {vector}")
 print(f"Reconstructed: {reconstructed}")
 ```
 
-### Product Quantization
+## Product Quantization
+
+Product quantization requires training on a dataset.
+It splits vectors into subspaces and learns codebooks.
 
 ```python
 import numpy as np
@@ -53,8 +68,8 @@ training = np.random.randn(100, 16).astype(np.float32)
 # Train a product quantizer
 pq = pyvq.ProductQuantizer(
     training_data=training,
-    m=4,           # 4 subspaces
-    k=8,           # 8 centroids per subspace
+    num_subspaces=4,   # 4 subspaces (16/4 = 4 dims each)
+    num_centroids=8,   # 8 centroids per subspace
     max_iters=10,
     distance=pyvq.Distance.euclidean(),
     seed=42
@@ -69,7 +84,9 @@ print(f"Original dimension: {len(vector)}")
 print(f"Quantized dimension: {len(quantized)}")
 ```
 
-### Tree-Structured VQ
+## Tree-Structured VQ
+
+TSVQ builds a binary tree of centroids for hierarchical quantization.
 
 ```python
 import numpy as np
@@ -93,6 +110,8 @@ reconstructed = tsvq.dequantize(quantized)
 
 ## Distance Computation
 
+Compute distances between vectors using various metrics:
+
 ```python
 import numpy as np
 import pyvq
@@ -103,7 +122,7 @@ b = np.array([4.0, 5.0, 6.0], dtype=np.float32)
 # Different distance metrics
 euclidean = pyvq.Distance.euclidean()
 manhattan = pyvq.Distance.manhattan()
-cosine = pyvq.Distance.cosine_distance()
+cosine = pyvq.Distance.cosine()
 sq_euclidean = pyvq.Distance.squared_euclidean()
 
 print(f"Euclidean: {euclidean.compute(a, b)}")
@@ -111,29 +130,3 @@ print(f"Manhattan: {manhattan.compute(a, b)}")
 print(f"Cosine: {cosine.compute(a, b)}")
 print(f"Squared Euclidean: {sq_euclidean.compute(a, b)}")
 ```
-
-## Working with NumPy Arrays
-
-All PyVq functions accept NumPy arrays:
-
-```python
-import numpy as np
-import pyvq
-
-# Input must be float32
-vectors = np.random.randn(100, 64).astype(np.float32)
-
-sq = pyvq.ScalarQuantizer(-1.0, 1.0, 256)
-
-# Quantize all vectors
-quantized = [sq.quantize(v) for v in vectors]
-
-# Results are NumPy arrays
-print(type(quantized[0]))  # <class 'numpy.ndarray'>
-```
-
-## Next Steps
-
-- Learn about [vector quantization concepts](concepts.md)
-- See the [API Reference](../api/distance.md)
-- Explore more [Examples](../examples/basic.md)

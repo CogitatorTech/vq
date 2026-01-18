@@ -28,12 +28,9 @@ theme:
     - content.code.copy
     - navigation.tabs
     - navigation.top
-    - navigation.indexes
-    - navigation.expand
     - content.code.select
     - content.code.annotate
     - navigation.tracking
-    - navigation.sections
 
 extra:
   social:
@@ -45,18 +42,9 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
-      - Concepts: getting-started/concepts.md
-  - API Reference:
-      - Distance: api/distance.md
-      - BinaryQuantizer: api/bq.md
-      - ScalarQuantizer: api/sq.md
-      - ProductQuantizer: api/pq.md
-      - TSVQ: api/tsvq.md
-  - Examples:
-      - Basic Usage: examples/basic.md
+  - Getting Started: getting-started.md
+  - Examples: examples.md
+  - API Reference: api-reference.md
 
 extra_javascript:
   - assets/js/mathjax.js

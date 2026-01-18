@@ -27,6 +27,8 @@ It outlines features to be implemented and their current status.
 * [x] `dequantize` support
 * [ ] Persistent serialization (save and load models)
 * [ ] Streaming training support
+* [ ] Batch quantization (quantize multiple vectors at once)
+* [ ] `fit_transform` convenience method
 
 ### 4. Performance Optimizations
 
@@ -56,5 +58,5 @@ It outlines features to be implemented and their current status.
 * [x] Integration tests
 * [x] Documentation examples
 * [x] Code coverage setup
+* [x] Python API documentation
 * [ ] Performance benchmarks report
-* [ ] Python API documentation

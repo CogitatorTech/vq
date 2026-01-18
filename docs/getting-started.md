@@ -1,10 +1,23 @@
-# Quick Start
+# Getting Started
 
-This guide shows you how to use Vq's quantization algorithms.
+This guide covers installation and basic usage of Vq.
+
+## Installation
+
+Add Vq to your project:
+
+```bash
+cargo add vq --features parallel,simd
+```
+
+!!! note "Requirements"
+- Rust 1.85 or later
+- For `simd` feature, a C compiler (like GCC or Clang) that supports C11 is needed
 
 ## Binary Quantization
 
-Binary quantization maps values to 0 or 1 based on a threshold:
+Binary quantization maps values to 0 or 1 based on a threshold.
+It provides at least 75% storage reduction.
 
 ```rust
 use vq::{BinaryQuantizer, Quantizer};
@@ -25,7 +38,8 @@ fn main() -> vq::VqResult<()> {
 
 ## Scalar Quantization
 
-Scalar quantization maps a continuous range to discrete levels:
+Scalar quantization maps a continuous range to discrete levels.
+It also provides at least 75% storage reduction.
 
 ```rust
 use vq::{ScalarQuantizer, Quantizer};
@@ -49,7 +63,8 @@ fn main() -> vq::VqResult<()> {
 
 ## Product Quantization
 
-Product quantization requires training on a dataset:
+Product quantization requires training on a dataset.
+It splits vectors into subspaces and learns codebooks.
 
 ```rust
 use vq::{ProductQuantizer, Distance, Quantizer};
@@ -84,7 +99,7 @@ fn main() -> vq::VqResult<()> {
 
 ## Distance Computation
 
-Compute distances between vectors:
+Compute distances between vectors using various metrics:
 
 ```rust
 use vq::Distance;
@@ -104,9 +119,3 @@ fn main() -> vq::VqResult<()> {
     Ok(())
 }
 ```
-
-## Next Steps
-
-- Learn about [vector quantization concepts](concepts.md)
-- Explore individual algorithms in the [User Guide](../guide/bq.md)
-- See detailed [API documentation](https://docs.rs/vq)
