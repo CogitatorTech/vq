@@ -68,11 +68,9 @@ fn test_binary_quantizer_rejects_nan_threshold() {
 #[test]
 fn test_product_quantizer_validates_dimension_consistency() {
     // Bug: PQ didn't check if all training vectors have same dimension
-    let training = vec![
-        vec![1.0, 2.0, 3.0, 4.0],
+    let training = [vec![1.0, 2.0, 3.0, 4.0],
         vec![5.0, 6.0, 7.0, 8.0],
-        vec![9.0, 10.0], // Different dimension!
-    ];
+        vec![9.0, 10.0]];
     let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
 
     let result = ProductQuantizer::new(&refs, 2, 4, 10, Distance::Euclidean, 42);
@@ -82,11 +80,9 @@ fn test_product_quantizer_validates_dimension_consistency() {
 
 #[test]
 fn test_product_quantizer_accepts_consistent_dimensions() {
-    let training = vec![
-        vec![1.0, 2.0, 3.0, 4.0],
+    let training = [vec![1.0, 2.0, 3.0, 4.0],
         vec![5.0, 6.0, 7.0, 8.0],
-        vec![9.0, 10.0, 11.0, 12.0],
-    ];
+        vec![9.0, 10.0, 11.0, 12.0]];
     let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
 
     let result = ProductQuantizer::new(&refs, 2, 2, 10, Distance::Euclidean, 42);
@@ -270,7 +266,7 @@ fn test_cosine_distance_result_clamped() {
     let dist = Distance::CosineDistance.compute(&a, &b).unwrap();
 
     // Distance should be in valid range [0, 1]
-    assert!(dist >= 0.0 && dist <= 1.0);
+    assert!((0.0..=1.0).contains(&dist));
     assert!(dist.abs() < 1e-6); // Should be very close to 0
 }
 
@@ -281,11 +277,9 @@ fn test_cosine_distance_result_clamped() {
 #[test]
 fn test_tsvq_handles_nan_in_training_data() {
     // Bug: NaN values caused unstable sorting behavior
-    let training = vec![
-        vec![1.0, 2.0, 3.0, 4.0],
+    let training = [vec![1.0, 2.0, 3.0, 4.0],
         vec![5.0, f32::NAN, 7.0, 8.0],
-        vec![9.0, 10.0, 11.0, 12.0],
-    ];
+        vec![9.0, 10.0, 11.0, 12.0]];
     let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
 
     // Should not panic and should handle NaN gracefully
@@ -365,10 +359,7 @@ fn test_distance_metric_name_method() {
 
 #[test]
 fn test_pq_distance_metric_introspection() {
-    let training = vec![
-        vec![1.0, 2.0, 3.0, 4.0],
-        vec![5.0, 6.0, 7.0, 8.0],
-    ];
+    let training = [vec![1.0, 2.0, 3.0, 4.0], vec![5.0, 6.0, 7.0, 8.0]];
     let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
 
     let pq = ProductQuantizer::new(&refs, 2, 2, 10, Distance::Manhattan, 42).unwrap();
@@ -378,10 +369,7 @@ fn test_pq_distance_metric_introspection() {
 
 #[test]
 fn test_tsvq_distance_metric_introspection() {
-    let training = vec![
-        vec![1.0, 2.0, 3.0, 4.0],
-        vec![5.0, 6.0, 7.0, 8.0],
-    ];
+    let training = [vec![1.0, 2.0, 3.0, 4.0], vec![5.0, 6.0, 7.0, 8.0]];
     let refs: Vec<&[f32]> = training.iter().map(|v| v.as_slice()).collect();
 
     let tsvq = TSVQ::new(&refs, 2, Distance::CosineDistance).unwrap();

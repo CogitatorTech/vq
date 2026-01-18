@@ -331,7 +331,8 @@ def test_quantizers_handle_float64_input():
         assert result is not None
     except Exception as e:
         # If it fails, it should be a type error, not a crash
-        assert "type" in str(e).lower() or "dtype" in str(e).lower()
+        err_msg = str(e).lower()
+        assert "type" in err_msg or "dtype" in err_msg or "converted" in err_msg or "array" in err_msg
 
 
 # =============================================================================

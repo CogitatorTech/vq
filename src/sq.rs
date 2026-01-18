@@ -132,10 +132,7 @@ impl Quantizer for ScalarQuantizer {
 
     fn quantize(&self, vector: &[f32]) -> VqResult<Self::QuantizedOutput> {
         // Safety assertion: levels was validated to be <= 256 in constructor
-        debug_assert!(
-            self.levels <= 256,
-            "levels must be <= 256 to fit in u8"
-        );
+        debug_assert!(self.levels <= 256, "levels must be <= 256 to fit in u8");
         Ok(vector
             .iter()
             .map(|&x| {

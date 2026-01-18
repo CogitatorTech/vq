@@ -61,10 +61,7 @@ impl TSVQNode {
             .enumerate()
             // Filter out NaN values, then find max
             .filter(|&(_, v)| !v.is_nan())
-            .max_by(|a, b| {
-                a.1.partial_cmp(b.1)
-                    .expect("filtered NaN values, so partial_cmp should succeed")
-            })
+            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
             .map(|(i, _)| i)
             .unwrap_or(0);
 
@@ -84,26 +81,28 @@ impl TSVQNode {
         };
 
         // Partition using indices to avoid cloning vectors
-        let (left_indices, right_indices): (Vec<_>, Vec<_>) = (0..training_data.len())
-            .partition(|&i| training_data[i].data[split_dim] <= median);
+        let (left_indices, right_indices): (Vec<_>, Vec<_>) =
+            (0..training_data.len()).partition(|&i| training_data[i].data[split_dim] <= median);
 
         // Build child nodes using vector references
         let left = if !left_indices.is_empty() && left_indices.len() < training_data.len() {
-            let left_data: Vec<&Vector<f32>> = left_indices
-                .iter()
-                .map(|&i| &training_data[i])
-                .collect();
-            Some(Box::new(TSVQNode::build_from_refs(&left_data, max_depth - 1)?))
+            let left_data: Vec<&Vector<f32>> =
+                left_indices.iter().map(|&i| &training_data[i]).collect();
+            Some(Box::new(TSVQNode::build_from_refs(
+                &left_data,
+                max_depth - 1,
+            )?))
         } else {
             None
         };
 
         let right = if !right_indices.is_empty() && right_indices.len() < training_data.len() {
-            let right_data: Vec<&Vector<f32>> = right_indices
-                .iter()
-                .map(|&i| &training_data[i])
-                .collect();
-            Some(Box::new(TSVQNode::build_from_refs(&right_data, max_depth - 1)?))
+            let right_data: Vec<&Vector<f32>> =
+                right_indices.iter().map(|&i| &training_data[i]).collect();
+            Some(Box::new(TSVQNode::build_from_refs(
+                &right_data,
+                max_depth - 1,
+            )?))
         } else {
             None
         };
