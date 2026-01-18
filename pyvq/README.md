@@ -19,19 +19,19 @@ pip install pyvq
 import numpy as np
 import pyvq
 
-# Binary Quantization
+# Binary quantization
 bq = pyvq.BinaryQuantizer(threshold=0.0, low=0, high=1)
 vector = np.array([-0.5, 0.0, 0.5, 1.0], dtype=np.float32)
 codes = bq.quantize(vector)
 print(f"Binary codes: {codes}")  # [0, 1, 1, 1]
 
-# Scalar Quantization  
+# Scalar quantization  
 sq = pyvq.ScalarQuantizer(min=-1.0, max=1.0, levels=256)
 quantized = sq.quantize(vector)
 reconstructed = sq.dequantize(quantized)
 print(f"Reconstructed: {reconstructed}")
 
-# Distance Computation
+# Distance computation
 dist = pyvq.Distance.euclidean()
 a = np.array([1.0, 2.0, 3.0], dtype=np.float32)
 b = np.array([4.0, 5.0, 6.0], dtype=np.float32)
@@ -40,7 +40,7 @@ print(f"Distance: {dist.compute(a, b)}")
 
 ### Documentation
 
-Visit PyVq's [documentation page](https://CogitatorTech.github.io/vq/python) for detailed information including examples and API references.
+Visit PyVq's [documentation page](https://CogitatorTech.github.io/vq/python) for more information including examples and API references.
 
 ### License
 
