@@ -13,6 +13,8 @@ product quantization (PQ), and tree-structured vector quantization (TSVQ).
 
 Vector quantization is a technique to reduce the size of high-dimensional vectors by approximating them with a smaller set of representative vectors.
 It can be used for various applications such as data compression and nearest neighbor search to reduce the memory footprint and speed up search.
+For example, vector quantization can be used to reduce the size of data stored in a vector database or speed up the response time of a RAG-based
+application.
 
 ### Features
 
