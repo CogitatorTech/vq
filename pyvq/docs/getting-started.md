@@ -9,11 +9,12 @@ pip install pyvq
 ```
 
 !!! note "Requirements"
-    Python 3.10 or later is required.
+    Python 3.10 or later
 
 ## Binary Quantization
 
-Binary quantization maps values to 0 or 1 based on a threshold. It provides 75% storage reduction.
+Binary quantization maps values to 0 or 1 based on a threshold.
+It provides at least 75% storage reduction.
 
 ```python
 import numpy as np
@@ -54,7 +55,8 @@ print(f"Reconstructed: {reconstructed}")
 
 ## Product Quantization
 
-Product quantization requires training on a dataset. It splits vectors into subspaces and learns codebooks.
+Product quantization requires training on a dataset.
+It splits vectors into subspaces and learns codebooks.
 
 ```python
 import numpy as np
@@ -128,22 +130,3 @@ print(f"Manhattan: {manhattan.compute(a, b)}")
 print(f"Cosine: {cosine.compute(a, b)}")
 print(f"Squared Euclidean: {sq_euclidean.compute(a, b)}")
 ```
-
-## Concepts
-
-### What is Vector Quantization?
-
-Vector quantization is a lossy compression technique that approximates vectors using a smaller set of representative values. Common uses:
-
-- **Embedding compression**: Reduce memory for ML embeddings
-- **Approximate nearest neighbor search**: Speed up similarity searches
-- **Data compression**: Reduce storage costs for vector databases
-
-### Choosing an Algorithm
-
-| Algorithm | Best For | Compression |
-|-----------|----------|-------------|
-| **Binary** | Fast similarity via Hamming distance | 75% |
-| **Scalar** | Values with known min/max range | 75% |
-| **Product** | High-dimensional embeddings | 50% |
-| **TSVQ** | Hierarchical clustering | 50% |
