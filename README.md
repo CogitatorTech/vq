@@ -165,6 +165,7 @@ make eval-all
 > To run the benchmarks, you need to have GNU Make installed.
 > The `make eval-all` command will run each quantizer on a set of high-dimensional synthetic data and report runtime (ms) and reconstruction
 > error (RMSE).
+> See [src/bin/common.rs](src/bin/common.rs) for parameters used in the benchmarks like size of the training data, dimensions, etc.
 
 ---
 
