@@ -11,8 +11,8 @@ cargo add vq --features parallel,simd
 ```
 
 !!! note "Requirements"
-- Rust 1.85 or later
-- For `simd` feature, a C compiler (like GCC or Clang) that supports C11 is needed
+    - Rust 1.85 or later
+    - For `simd` feature, a C compiler (like GCC or Clang) that supports C11 is needed
 
 ## Binary Quantization
 
