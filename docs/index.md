@@ -6,19 +6,19 @@ It provides efficient implementations of popular quantization algorithms for com
 ## Features
 
 - Simple and generic API via the `Quantizer` trait
-- Morer than 50% reduction in storage size of input vectors
+- More than 50% reduction in storage size of input vectors
 - SIMD acceleration support (AVX/AVX2/AVX512/NEON/SVE) via the `simd` feature
 - Multi-threaded training via the `parallel` feature
 - Multiple distance metrics: Euclidean, Manhattan, Cosine
 
 ## Supported Algorithms
 
-| Algorithm                               | Training      | Quantization  | Compression | Use Case                |
-|-----------------------------------------|---------------|---------------|-------------|-------------------------|
-| [Binary (BQ)](guide/bq.md)              | $O(1)$        | $O(nd)$       | 75%         | Fast binary similarity  |
-| [Scalar (SQ)](guide/sq.md)              | $O(1)$        | $O(nd)$       | 75%         | Uniform value ranges    |
-| [Product (PQ)](guide/pq.md)             | $O(nkd)$      | $O(nd)$       | 50%         | Large-scale ANN search  |
-| [Tree-Structured (TSVQ)](guide/tsvq.md) | $O(n \log k)$ | $O(d \log k)$ | 50%         | Hierarchical clustering |
+| Algorithm | Training | Quantization | Compression | Use Case |
+|-----------|----------|--------------|-------------|----------|
+| Binary (BQ) | $O(1)$ | $O(nd)$ | 75% | Fast binary similarity |
+| Scalar (SQ) | $O(1)$ | $O(nd)$ | 75% | Uniform value ranges |
+| Product (PQ) | $O(nkd)$ | $O(nd)$ | 50% | Large-scale ANN search |
+| Tree-Structured (TSVQ) | $O(n \log k)$ | $O(d \log k)$ | 50% | Hierarchical clustering |
 
 Where $n$ = number of vectors, $d$ = dimensions, $k$ = centroids.
 
@@ -51,7 +51,8 @@ See the [PyVq documentation](https://cogitatortech.github.io/vq/python/) for Pyt
 
 ## Quick Links
 
-- [Getting Started](getting-started/installation.md)
-- [API Reference (docs.rs)](https://docs.rs/vq)
+- [Getting Started](getting-started.md) - Installation and first steps
+- [Examples](examples.md) - Complete code examples
+- [API Reference](api-reference.md) - API overview
+- [docs.rs/vq](https://docs.rs/vq) - Full Rust API documentation
 - [GitHub Repository](https://github.com/CogitatorTech/vq)
-- [PyPI Package](https://pypi.org/project/pyvq/)

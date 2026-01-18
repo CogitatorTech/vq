@@ -1,8 +1,8 @@
-# Basic Usage Examples
+# Examples
 
-This page contains complete examples showing common Vq usage patterns.
+Complete code examples demonstrating Vq usage patterns.
 
-## Binary Quantization
+## Binary Quantization with Hamming Distance
 
 ```rust
 use vq::{BinaryQuantizer, Quantizer, VqResult};
@@ -160,7 +160,7 @@ fn main() -> VqResult<()> {
 }
 ```
 
-## Combining Multiple Quantizers
+## Chaining Quantizers
 
 ```rust
 use vq::{BinaryQuantizer, ScalarQuantizer, Quantizer, VqResult};

@@ -1,10 +1,22 @@
-# Quick Start
+# Getting Started
 
-This guide shows you how to use Vq's quantization algorithms.
+This guide covers installation and basic usage of Vq.
+
+## Installation
+
+Add Vq to your project:
+
+```bash
+cargo add vq --features parallel,simd
+```
+
+!!! note "Requirements"
+    - Rust 1.85 or later
+    - For `simd` feature: a C compiler (GCC or Clang) supporting C11
 
 ## Binary Quantization
 
-Binary quantization maps values to 0 or 1 based on a threshold:
+Binary quantization maps values to 0 or 1 based on a threshold. It provides 75% storage reduction.
 
 ```rust
 use vq::{BinaryQuantizer, Quantizer};
@@ -25,7 +37,7 @@ fn main() -> vq::VqResult<()> {
 
 ## Scalar Quantization
 
-Scalar quantization maps a continuous range to discrete levels:
+Scalar quantization maps a continuous range to discrete levels. It also provides 75% storage reduction.
 
 ```rust
 use vq::{ScalarQuantizer, Quantizer};
@@ -49,7 +61,7 @@ fn main() -> vq::VqResult<()> {
 
 ## Product Quantization
 
-Product quantization requires training on a dataset:
+Product quantization requires training on a dataset. It splits vectors into subspaces and learns codebooks.
 
 ```rust
 use vq::{ProductQuantizer, Distance, Quantizer};
@@ -84,7 +96,7 @@ fn main() -> vq::VqResult<()> {
 
 ## Distance Computation
 
-Compute distances between vectors:
+Compute distances between vectors using various metrics:
 
 ```rust
 use vq::Distance;
@@ -105,8 +117,21 @@ fn main() -> vq::VqResult<()> {
 }
 ```
 
-## Next Steps
+## Concepts
 
-- Learn about [vector quantization concepts](concepts.md)
-- Explore individual algorithms in the [User Guide](../guide/bq.md)
-- See detailed [API documentation](https://docs.rs/vq)
+### What is Vector Quantization?
+
+Vector quantization is a lossy compression technique that approximates vectors using a smaller set of representative values. It's commonly used for:
+
+- **Embedding compression**: Reduce memory for ML embeddings (128-1536 dimensions)
+- **Approximate nearest neighbor search**: Speed up similarity searches
+- **Data compression**: Reduce storage costs for vector databases
+
+### Choosing an Algorithm
+
+| Algorithm | Best For | Compression |
+|-----------|----------|-------------|
+| **Binary** | Fast similarity via Hamming distance | 75% (f32 → u8) |
+| **Scalar** | Values with known min/max range | 75% (f32 → u8) |
+| **Product** | High-dimensional embeddings | 50% (f32 → f16) |
+| **TSVQ** | Hierarchical clustering | 50% (f32 → f16) |
