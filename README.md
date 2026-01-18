@@ -124,7 +124,7 @@ fn main() -> VqResult<()> {
 #### Product Quantizer Example
 
 ```rust
-use vq::{ProductQuantizer, Distance, VqResult};
+use vq::{ProductQuantizer, Distance, Quantizer, VqResult};
 
 fn main() -> VqResult<()> {
     // Training data (each inner slice is a vector)
