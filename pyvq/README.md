@@ -36,6 +36,9 @@ dist = pyvq.Distance.euclidean()
 a = np.array([1.0, 2.0, 3.0], dtype=np.float32)
 b = np.array([4.0, 5.0, 6.0], dtype=np.float32)
 print(f"Distance: {dist.compute(a, b)}")
+
+# Check the SIMD backend in use
+print(f"SIMD Backend: {pyvq.get_simd_backend()}")
 ```
 
 ### Documentation
