@@ -433,7 +433,7 @@ mod simd_tests {
 
         let pq = ProductQuantizer::new(&training_refs, 4, 8, 15, Distance::Euclidean, 42).unwrap();
 
-        // Ensure SIMD-accelerated distance computations produce valid quantization
+        // Make sure that SIMD-accelerated distance computations produce valid quantization
         for vec in training_slices.iter().take(50) {
             let quantized = pq.quantize(vec).unwrap();
             assert_eq!(quantized.len(), 32);

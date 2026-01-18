@@ -93,7 +93,7 @@ pub fn manhattan_f32(a: &[f32], b: &[f32]) -> Option<f32> {
     let mut result: f32 = 0.0;
     // SAFETY: Both slices are guaranteed to have the same length (checked above).
     // The C function only reads from the pointers and writes to result.
-    // Slices ensure valid memory regions.
+    // Slices guarantee valid memory regions.
     let status: HsdStatus =
         unsafe { hsd_dist_manhattan_f32(a.as_ptr(), b.as_ptr(), a.len(), &mut result) }.into();
     if status.is_success() {
@@ -114,7 +114,7 @@ pub fn cosine_f32(a: &[f32], b: &[f32]) -> Option<f32> {
     let mut result: f32 = 0.0;
     // SAFETY: Both slices are guaranteed to have the same length (checked above).
     // The C function only reads from the pointers and writes to result.
-    // Slices ensure valid memory regions.
+    // Slices guarantee valid memory regions.
     let status: HsdStatus =
         unsafe { hsd_sim_cosine_f32(a.as_ptr(), b.as_ptr(), a.len(), &mut result) }.into();
     if status.is_success() {

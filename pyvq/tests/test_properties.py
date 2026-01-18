@@ -58,10 +58,10 @@ class TestBinaryQuantizerProperties:
     def test_bq_output_is_binary(self, threshold, low, high, values):
         """BQ output should only contain low or high values."""
         assume(low < high)
-        
+
         bq = pyvq.BinaryQuantizer(threshold=threshold, low=low, high=high)
         codes = bq.quantize(values)
-        
+
         assert set(codes).issubset({low, high}), f"Codes contain unexpected values: {set(codes)}"
 
     @given(
@@ -73,10 +73,10 @@ class TestBinaryQuantizerProperties:
         """Dequantized values should only be low or high (as floats)."""
         low, high = 0, 1  # integers for BinaryQuantizer
         bq = pyvq.BinaryQuantizer(threshold=threshold, low=low, high=high)
-        
+
         codes = bq.quantize(values)
         reconstructed = bq.dequantize(codes)
-        
+
         # Dequantize returns floats
         assert set(reconstructed).issubset({float(low), float(high)})
 
@@ -85,10 +85,10 @@ class TestBinaryQuantizerProperties:
     def test_bq_preserves_length(self, values):
         """Quantize/dequantize should preserve array length."""
         bq = pyvq.BinaryQuantizer(threshold=0.0, low=0, high=1)  # integers
-        
+
         codes = bq.quantize(values)
         reconstructed = bq.dequantize(codes)
-        
+
         assert len(codes) == len(values)
         assert len(reconstructed) == len(values)
 
@@ -109,12 +109,12 @@ class TestScalarQuantizerProperties:
     def test_sq_codes_in_valid_range(self, min_val, max_val, levels):
         """SQ codes should be in range [0, levels-1]."""
         assume(min_val < max_val)
-        
+
         sq = pyvq.ScalarQuantizer(min=min_val, max=max_val, levels=levels)
         values = np.random.uniform(min_val, max_val, 50).astype(np.float32)
-        
+
         codes = sq.quantize(values)
-        
+
         assert np.all(codes >= 0), "Codes contain negative values"
         assert np.all(codes < levels), f"Codes exceed max level {levels-1}"
 
@@ -127,13 +127,13 @@ class TestScalarQuantizerProperties:
     def test_sq_reconstruction_in_range(self, min_val, max_val, levels):
         """SQ reconstructed values should be within [min, max]."""
         assume(min_val < max_val)
-        
+
         sq = pyvq.ScalarQuantizer(min=min_val, max=max_val, levels=levels)
         values = np.random.uniform(min_val, max_val, 50).astype(np.float32)
-        
+
         codes = sq.quantize(values)
         reconstructed = sq.dequantize(codes)
-        
+
         assert np.all(reconstructed >= min_val - 1e-5)
         assert np.all(reconstructed <= max_val + 1e-5)
 
@@ -143,7 +143,7 @@ class TestScalarQuantizerProperties:
         """SQ step size should equal (max - min) / (levels - 1)."""
         min_val, max_val = -1.0, 1.0
         sq = pyvq.ScalarQuantizer(min=min_val, max=max_val, levels=levels)
-        
+
         expected_step = (max_val - min_val) / (levels - 1)
         assert abs(sq.step - expected_step) < 1e-6
 
@@ -180,11 +180,11 @@ class TestDistanceProperties:
     def test_euclidean_is_symmetric(self, pair):
         """Euclidean distance should be symmetric: d(a,b) = d(b,a)."""
         a, b = pair
-        
+
         dist = pyvq.Distance.euclidean()
         d_ab = dist.compute(a, b)
         d_ba = dist.compute(b, a)
-        
+
         assert abs(d_ab - d_ba) < 1e-5, f"Asymmetry: d(a,b)={d_ab}, d(b,a)={d_ba}"
 
     @given(pair=matched_float32_arrays())
@@ -192,10 +192,10 @@ class TestDistanceProperties:
     def test_euclidean_is_non_negative(self, pair):
         """Euclidean distance should be non-negative."""
         a, b = pair
-        
+
         dist = pyvq.Distance.euclidean()
         result = dist.compute(a, b)
-        
+
         assert result >= 0, f"Negative distance: {result}"
 
     @given(pair=matched_float32_arrays())
@@ -203,11 +203,11 @@ class TestDistanceProperties:
     def test_manhattan_is_symmetric(self, pair):
         """Manhattan distance should be symmetric."""
         a, b = pair
-        
+
         dist = pyvq.Distance.manhattan()
         d_ab = dist.compute(a, b)
         d_ba = dist.compute(b, a)
-        
+
         assert abs(d_ab - d_ba) < 1e-5
 
     @given(
@@ -216,12 +216,12 @@ class TestDistanceProperties:
     @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow])
     def test_cosine_self_distance_is_zero(self, a):
         """Cosine distance of a vector to itself should be 0."""
-        # Ensure non-zero vector
+        # Guarantee vectors are non-zero
         assume(np.linalg.norm(a) > 1e-3)
-        
+
         dist = pyvq.Distance.cosine()
         result = dist.compute(a, a.copy())
-        
+
         assert abs(result) < 1e-4, f"Cosine self-distance is {result}, expected ~0"
 
 
@@ -241,7 +241,7 @@ class TestProductQuantizerProperties:
         """PQ quantize/dequantize should preserve vector dimension."""
         np.random.seed(42)
         training = np.random.randn(n_samples, dim).astype(np.float32)
-        
+
         pq = pyvq.ProductQuantizer(
             training_data=training,
             num_subspaces=2,
@@ -249,11 +249,11 @@ class TestProductQuantizerProperties:
             max_iters=5,
             seed=42
         )
-        
+
         test_vec = training[0].copy()
         codes = pq.quantize(test_vec)
         reconstructed = pq.dequantize(codes)
-        
+
         assert len(reconstructed) == dim
         assert pq.dim == dim
 
@@ -265,17 +265,17 @@ class TestProductQuantizerProperties:
         """PQ sub_dim should equal dim / num_subspaces."""
         dim = 16  # Fixed dim divisible by common subspace counts
         assume(dim % num_subspaces == 0)
-        
+
         np.random.seed(42)
         training = np.random.randn(100, dim).astype(np.float32)
-        
+
         pq = pyvq.ProductQuantizer(
             training_data=training,
             num_subspaces=num_subspaces,
             num_centroids=4,
             seed=42
         )
-        
+
         expected_sub_dim = dim // num_subspaces
         assert pq.sub_dim == expected_sub_dim
 
@@ -296,13 +296,13 @@ class TestTSVQProperties:
         """TSVQ quantize/dequantize should preserve vector dimension."""
         np.random.seed(42)
         training = np.random.randn(n_samples, dim).astype(np.float32)
-        
+
         tsvq = pyvq.TSVQ(training_data=training, max_depth=3)
-        
+
         test_vec = training[0].copy()
         codes = tsvq.quantize(test_vec)
         reconstructed = tsvq.dequantize(codes)
-        
+
         assert len(reconstructed) == dim
         assert tsvq.dim == dim
 
