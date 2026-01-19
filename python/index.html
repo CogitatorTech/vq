@@ -650,14 +650,14 @@
 
 
 <h1 id="pyvq">PyVq<a class="headerlink" href="#pyvq" title="Permanent link">&para;</a></h1>
-<p>PyVq provides Python bindings for the <a href="https://github.com/CogitatorTech/vq">Vq</a> vector quantization library.</p>
+<p>PyVq provides Python 🐍 bindings for the <a href="https://github.com/CogitatorTech/vq">Vq</a> vector quantization library.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
-<li>High-performance Rust implementation with Python bindings</li>
+<li>High-performance Rust 🦀 implementation with Python bindings</li>
 <li>NumPy array support for input and output</li>
-<li>All quantization algorithms: BinaryQuantizer, ScalarQuantizer, ProductQuantizer, TSVQ</li>
-<li>SIMD-accelerated distance computations</li>
-<li>Simple, Pythonic API</li>
+<li>All quantization algorithms in Vq: BinaryQuantizer, ScalarQuantizer, ProductQuantizer, TSVQ</li>
+<li>Fast SIMD-accelerated distance computations</li>
+<li>A simple, Pythonic API</li>
 </ul>
 <h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -683,9 +683,9 @@
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Euclidean distance: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pyvq
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># PyVq works with Python 3.10 or later</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pip<span class="w"> </span>install<span class="w"> </span>pyvq
 </code></pre></div>
-<p>Requires Python 3.10 or later.</p>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="getting-started/">Getting Started</a> - Installation and first steps</li>
@@ -696,7 +696,7 @@
 <p>For the Rust library documentation, see <a href="https://docs.rs/vq">docs.rs/vq</a> or the <a href="https://cogitatortech.github.io/vq/">main documentation</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Early Development</p>
-<p>PyVq is in early development. Please report bugs on <a href="https://github.com/CogitatorTech/vq/issues">GitHub Issues</a>.</p>
+<p>PyVq is in early development. Please report bugs on project's <a href="https://github.com/CogitatorTech/vq/issues">issues page</a> on GitHub.</p>
 </div>
 
 
