@@ -86,3 +86,7 @@ pyvq/wheels
 .env
 .benchmarks/
 site/
+.junie/
+.claude/
+.agents/
+.codex
