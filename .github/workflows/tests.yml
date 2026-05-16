@@ -2,7 +2,16 @@ name: Run Tests
 
 on:
   workflow_dispatch:
+  schedule: # Run every day at midnight (UTC)
+    - cron: '0 0 * * *'
   workflow_call:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'pyvq/**'
   pull_request:
     branches:
       - main
@@ -19,7 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
